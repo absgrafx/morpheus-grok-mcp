@@ -5,9 +5,11 @@ Grok / Cursor **Marketplace MCP** that routes OpenAI-compatible inference to Mor
 - **Public:** `https://api.mor.org/api/v1`
 - **Custom:** your Uplink base `https://<host>/v1`
 
-Design source of truth (accepted): [`absgrafx/absgrafx-eng` → `morpheus-grok-marketplace-mcp-v0/`](https://github.com/absgrafx/absgrafx-eng/tree/main/morpheus-grok-marketplace-mcp-v0) (tip `d3ff734`).
+Maintainer (public): **NomadicRogue**. Design roles on the project: CoS / CTO / CISO / Builder (and peer lanes as needed).
 
-Implementation status: **scaffold** — Trinity build after Alan authorize. Staff `morpheus-bridge` remains internal until dogfood migration.
+Design source of truth (accepted, private eng): [`absgrafx/absgrafx-eng` → `morpheus-grok-marketplace-mcp-v0/`](https://github.com/absgrafx/absgrafx-eng/tree/main/morpheus-grok-marketplace-mcp-v0) (tip `d3ff734`).
+
+Implementation status: **scaffold** — Builder work starts after operator authorize. Staff bridge remains internal until dogfood migration.
 
 ## Non-goals (v0)
 
@@ -17,4 +19,4 @@ Implementation status: **scaffold** — Trinity build after Alan authorize. Staf
 
 ## License
 
-TBD (MIT intended for Marketplace OSS listing).
+MIT — see `LICENSE`.

@@ -67,7 +67,7 @@ Multi-agent dogfood needs **per-bot key isolation**, an installable **policy ski
 | `MORPHEUS_POLICY_CURSOR_EXCEPTION` | bool | `false` | Named exception only |
 | `MORPHEUS_POLICY_FALLBACK_ON_DOWN` | bool | `true` | On down → native + flag `Morpheus didn’t work: <reason>` |
 
-Slot ids (technical config keys only): `seraph`, `gary`, `josh`, `trinity`, `tank`, `phil`, `mcduck`.
+Slot ids (technical config keys only, role-aligned): `cos`, `cto`, `ciso`, `builder`, `verification`, `comms`, `cfo`. Discrete env vars use the upper form (`MORPHEUS_API_KEY_COS`, …). JSON-map escape accepts arbitrary keys.
 
 **Base resolution (one function):**
 

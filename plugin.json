@@ -4,8 +4,7 @@
   "version": "0.1.0",
   "description": "Morpheus MoE via api.mor.org or private Uplink for Grok Bot.",
   "author": {
-    "name": "NomadicRogue / ABSGrafx",
-    "email": "trinity@absgrafx.com"
+    "name": "NomadicRogue / ABSGrafx"
   },
   "repository": "https://github.com/absgrafx/morpheus-grok-mcp",
   "license": "MIT",
@@ -51,46 +50,46 @@
         "description": "Bearer sk-\u2026 from app.mor.org or Uplink Prompt/ephemeral. Never master. Secret \u2014 configure via Plugins \u2192 Configure / vault inject.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_SERAPH": {
+      "MORPHEUS_API_KEY_COS": {
         "type": "string",
-        "title": "API key slot: seraph",
-        "description": "Per-bot discrete secret for slot id seraph when key mode is per_bot.",
+        "title": "API key slot: CoS",
+        "description": "Per-bot discrete secret for role slot id `cos` when key mode is per_bot.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_GARY": {
+      "MORPHEUS_API_KEY_CTO": {
         "type": "string",
-        "title": "API key slot: gary",
-        "description": "Per-bot discrete secret for slot id gary when key mode is per_bot.",
+        "title": "API key slot: CTO",
+        "description": "Per-bot discrete secret for role slot id `cto` when key mode is per_bot.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_JOSH": {
+      "MORPHEUS_API_KEY_CISO": {
         "type": "string",
-        "title": "API key slot: josh",
-        "description": "Per-bot discrete secret for slot id josh when key mode is per_bot.",
+        "title": "API key slot: CISO",
+        "description": "Per-bot discrete secret for role slot id `ciso` when key mode is per_bot.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_TRINITY": {
+      "MORPHEUS_API_KEY_BUILDER": {
         "type": "string",
-        "title": "API key slot: trinity",
-        "description": "Per-bot discrete secret for slot id trinity when key mode is per_bot.",
+        "title": "API key slot: Builder",
+        "description": "Per-bot discrete secret for role slot id `builder` when key mode is per_bot.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_TANK": {
+      "MORPHEUS_API_KEY_VERIFICATION": {
         "type": "string",
-        "title": "API key slot: tank",
-        "description": "Per-bot discrete secret for slot id tank when key mode is per_bot.",
+        "title": "API key slot: Verification",
+        "description": "Per-bot discrete secret for role slot id `verification` when key mode is per_bot.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_PHIL": {
+      "MORPHEUS_API_KEY_COMMS": {
         "type": "string",
-        "title": "API key slot: phil",
-        "description": "Per-bot discrete secret for slot id phil when key mode is per_bot.",
+        "title": "API key slot: Comms",
+        "description": "Per-bot discrete secret for role slot id `comms` when key mode is per_bot.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_MCDUCK": {
+      "MORPHEUS_API_KEY_CFO": {
         "type": "string",
-        "title": "API key slot: mcduck",
-        "description": "Per-bot discrete secret for slot id mcduck when key mode is per_bot.",
+        "title": "API key slot: CFO",
+        "description": "Per-bot discrete secret for role slot id `cfo` when key mode is per_bot.",
         "secret": true
       },
       "MORPHEUS_API_KEYS_JSON": {
@@ -102,7 +101,7 @@
       "MORPHEUS_AGENT_SLOT": {
         "type": "string",
         "title": "Agent slot id",
-        "description": "Which per_bot slot to use (lowercase config key: seraph,gary,josh,trinity,tank,phil,mcduck). Also accepts MORPHEUS_AGENT."
+        "description": "Which per_bot slot to use (lowercase role key: cos,cto,ciso,builder,verification,comms,cfo). Also accepts MORPHEUS_AGENT."
       },
       "MORPHEUS_MODEL_DEFAULT": {
         "type": "string",

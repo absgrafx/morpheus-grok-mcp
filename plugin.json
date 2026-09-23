@@ -1,0 +1,147 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "morpheus-inference",
+  "version": "0.1.0",
+  "description": "Morpheus MoE via api.mor.org or private Uplink for Grok Bot.",
+  "author": {
+    "name": "NomadicRogue / ABSGrafx",
+    "email": "trinity@absgrafx.com"
+  },
+  "repository": "https://github.com/absgrafx/morpheus-grok-mcp",
+  "license": "MIT",
+  "keywords": [
+    "morpheus",
+    "mcp",
+    "openai-compatible",
+    "moe",
+    "uplink",
+    "inference"
+  ],
+  "variables": {
+    "type": "object",
+    "properties": {
+      "MORPHEUS_ENDPOINT_MODE": {
+        "type": "string",
+        "title": "Endpoint mode",
+        "description": "public = https://api.mor.org/api/v1 ; custom = your Uplink https://<host>/v1",
+        "enum": [
+          "public",
+          "custom"
+        ],
+        "default": "public"
+      },
+      "MORPHEUS_BASE_URL": {
+        "type": "string",
+        "title": "Custom Uplink base URL",
+        "description": "Required when mode=custom. Auto-normalized to \u2026/v1 with warn if missing (no /chat/completions suffix). Never invent /api on Uplink."
+      },
+      "MORPHEUS_KEY_MODE": {
+        "type": "string",
+        "title": "Key mode",
+        "description": "shared = one key; per_bot = discrete slot secrets or JSON map",
+        "enum": [
+          "shared",
+          "per_bot"
+        ],
+        "default": "shared"
+      },
+      "MORPHEUS_API_KEY": {
+        "type": "string",
+        "title": "API key (shared)",
+        "description": "Bearer sk-\u2026 from app.mor.org or Uplink Prompt/ephemeral. Never master. Secret \u2014 configure via Plugins \u2192 Configure / vault inject.",
+        "secret": true
+      },
+      "MORPHEUS_API_KEY_SERAPH": {
+        "type": "string",
+        "title": "API key slot: seraph",
+        "description": "Per-bot discrete secret for slot id seraph when key mode is per_bot.",
+        "secret": true
+      },
+      "MORPHEUS_API_KEY_GARY": {
+        "type": "string",
+        "title": "API key slot: gary",
+        "description": "Per-bot discrete secret for slot id gary when key mode is per_bot.",
+        "secret": true
+      },
+      "MORPHEUS_API_KEY_JOSH": {
+        "type": "string",
+        "title": "API key slot: josh",
+        "description": "Per-bot discrete secret for slot id josh when key mode is per_bot.",
+        "secret": true
+      },
+      "MORPHEUS_API_KEY_TRINITY": {
+        "type": "string",
+        "title": "API key slot: trinity",
+        "description": "Per-bot discrete secret for slot id trinity when key mode is per_bot.",
+        "secret": true
+      },
+      "MORPHEUS_API_KEY_TANK": {
+        "type": "string",
+        "title": "API key slot: tank",
+        "description": "Per-bot discrete secret for slot id tank when key mode is per_bot.",
+        "secret": true
+      },
+      "MORPHEUS_API_KEY_PHIL": {
+        "type": "string",
+        "title": "API key slot: phil",
+        "description": "Per-bot discrete secret for slot id phil when key mode is per_bot.",
+        "secret": true
+      },
+      "MORPHEUS_API_KEY_MCDUCK": {
+        "type": "string",
+        "title": "API key slot: mcduck",
+        "description": "Per-bot discrete secret for slot id mcduck when key mode is per_bot.",
+        "secret": true
+      },
+      "MORPHEUS_API_KEYS_JSON": {
+        "type": "string",
+        "title": "Per-bot key map (JSON escape hatch)",
+        "description": "Optional JSON object mapping bot slot id \u2192 sk-\u2026 when key mode is per_bot. Prefer discrete slot vars; use map when host allows one install + map.",
+        "secret": true
+      },
+      "MORPHEUS_AGENT_SLOT": {
+        "type": "string",
+        "title": "Agent slot id",
+        "description": "Which per_bot slot to use (lowercase config key: seraph,gary,josh,trinity,tank,phil,mcduck). Also accepts MORPHEUS_AGENT."
+      },
+      "MORPHEUS_MODEL_DEFAULT": {
+        "type": "string",
+        "title": "Default model id",
+        "description": "Exact catalog id from GET /models (not a display name)."
+      },
+      "MORPHEUS_POLICY_MOE_DEFAULT": {
+        "type": "string",
+        "title": "MoE default policy",
+        "description": "true = prefer morpheus_chat for analysis",
+        "enum": [
+          "true",
+          "false"
+        ],
+        "default": "true"
+      },
+      "MORPHEUS_POLICY_CURSOR_EXCEPTION": {
+        "type": "string",
+        "title": "Native/Cursor exception policy",
+        "description": "true only when operator names a Cursor/native exception for the task",
+        "enum": [
+          "true",
+          "false"
+        ],
+        "default": "false"
+      },
+      "MORPHEUS_POLICY_FALLBACK_ON_DOWN": {
+        "type": "string",
+        "title": "Fallback when Morpheus down",
+        "description": "true = allow native fallback on 404/502/auth/empty and must surface: Morpheus didn\u2019t work: <reason>",
+        "enum": [
+          "true",
+          "false"
+        ],
+        "default": "true"
+      }
+    },
+    "required": [
+      "MORPHEUS_ENDPOINT_MODE"
+    ]
+  }
+}

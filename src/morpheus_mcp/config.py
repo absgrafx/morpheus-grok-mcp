@@ -14,13 +14,13 @@ logger = logging.getLogger("morpheus_mcp")
 PUBLIC_BASE = "https://api.mor.org/api/v1"
 
 KNOWN_SLOTS = (
-    "seraph",
-    "gary",
-    "josh",
-    "trinity",
-    "tank",
-    "phil",
-    "mcduck",
+    "cos",
+    "cto",
+    "ciso",
+    "cio",
+    "coo",
+    "cmo",
+    "cfo",
 )
 
 # Trailing resource paths sometimes pasted into base_url by mistake

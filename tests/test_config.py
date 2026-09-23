@@ -87,45 +87,59 @@ def test_shared_key(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_per_bot_discrete_slot(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MORPHEUS_KEY_MODE", "per_bot")
-    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "trinity")
-    monkeypatch.setenv("MORPHEUS_API_KEY_TRINITY", "sk-trinity-discrete")
+    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "cio")
+    monkeypatch.setenv("MORPHEUS_API_KEY_CIO", "sk-cio-discrete")
     monkeypatch.setenv("MORPHEUS_API_KEY", "sk-shared-should-not-use")
     key, label = resolve_api_key()
-    assert key == "sk-trinity-discrete"
-    assert label == "per_bot:discrete:trinity"
+    assert key == "sk-cio-discrete"
+    assert label == "per_bot:discrete:cio"
 
 
 def test_per_bot_json_map_escape(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MORPHEUS_KEY_MODE", "per_bot")
-    monkeypatch.setenv("MORPHEUS_AGENT", "gary")
-    monkeypatch.delenv("MORPHEUS_API_KEY_GARY", raising=False)
+    monkeypatch.setenv("MORPHEUS_AGENT", "cto")
+    monkeypatch.delenv("MORPHEUS_API_KEY_CTO", raising=False)
     monkeypatch.setenv(
         "MORPHEUS_API_KEYS_JSON",
-        json.dumps({"gary": "sk-gary-from-map", "seraph": "sk-seraph-map"}),
+        json.dumps({"cto": "sk-cto-from-map", "cos": "sk-cos-map"}),
     )
     key, label = resolve_api_key()
-    assert key == "sk-gary-from-map"
-    assert label == "per_bot:json_map:gary"
+    assert key == "sk-cto-from-map"
+    assert label == "per_bot:json_map:cto"
+
+
+def test_per_bot_json_map_arbitrary_slot(monkeypatch: pytest.MonkeyPatch) -> None:
+    """JSON-map escape accepts arbitrary slot keys (not only known roles)."""
+    monkeypatch.setenv("MORPHEUS_KEY_MODE", "per_bot")
+    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "legacy_alias")
+    monkeypatch.delenv("MORPHEUS_API_KEY_LEGACY_ALIAS", raising=False)
+    monkeypatch.setenv(
+        "MORPHEUS_API_KEYS_JSON",
+        json.dumps({"legacy_alias": "sk-legacy-map"}),
+    )
+    key, label = resolve_api_key()
+    assert key == "sk-legacy-map"
+    assert label == "per_bot:json_map:legacy_alias"
 
 
 def test_per_bot_discrete_preferred_over_json(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MORPHEUS_KEY_MODE", "per_bot")
-    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "josh")
-    monkeypatch.setenv("MORPHEUS_API_KEY_JOSH", "sk-josh-discrete")
+    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "ciso")
+    monkeypatch.setenv("MORPHEUS_API_KEY_CISO", "sk-ciso-discrete")
     monkeypatch.setenv(
         "MORPHEUS_API_KEYS_JSON",
-        json.dumps({"josh": "sk-josh-map"}),
+        json.dumps({"ciso": "sk-ciso-map"}),
     )
     key, label = resolve_api_key()
-    assert key == "sk-josh-discrete"
+    assert key == "sk-ciso-discrete"
     assert "discrete" in label
 
 
 def test_per_bot_hard_fail_no_silent_shared(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MORPHEUS_KEY_MODE", "per_bot")
-    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "tank")
+    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "coo")
     monkeypatch.setenv("MORPHEUS_API_KEY", "sk-shared-must-not-fallback")
-    monkeypatch.delenv("MORPHEUS_API_KEY_TANK", raising=False)
+    monkeypatch.delenv("MORPHEUS_API_KEY_COO", raising=False)
     monkeypatch.delenv("MORPHEUS_API_KEYS_JSON", raising=False)
     with pytest.raises(ConfigError, match="per_bot key missing"):
         resolve_api_key()

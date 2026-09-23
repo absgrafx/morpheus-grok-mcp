@@ -34,7 +34,7 @@ Ship an **OSS Agent Plugin**: thin MCP that routes OpenAI-compatible `chat/compl
 - **End user (single):** install once → public api.mor.org + one key → MoE via skill.
 - **Crew dogfood (multi-bot):** same listing; `key_mode=per_bot` with vault-injected slot secrets; `endpoint_mode=custom` pointing at private Uplink `…/v1`.
 - **CoS:** vault inject / rotate keys; does not paste keys into chat or listing config.
-- **Operator (NomadicRogue):** accept C/L/P + open questions before Builder ships.
+- **Operator (NomadicRogue):** accept C/L/P + open questions before CIO ships.
 
 ### Why MCP
 
@@ -67,7 +67,7 @@ Multi-agent dogfood needs **per-bot key isolation**, an installable **policy ski
 | `MORPHEUS_POLICY_CURSOR_EXCEPTION` | bool | `false` | Named exception only |
 | `MORPHEUS_POLICY_FALLBACK_ON_DOWN` | bool | `true` | On down → native + flag `Morpheus didn’t work: <reason>` |
 
-Slot ids (technical config keys only): `seraph`, `gary`, `josh`, `trinity`, `tank`, `phil`, `mcduck`.
+Slot ids (technical config keys only, role-aligned): `cos`, `cto`, `ciso`, `cio`, `coo`, `cmo`, `cfo`. Discrete env vars use the upper form (`MORPHEUS_API_KEY_COS`, …). JSON-map escape accepts arbitrary keys.
 
 **Base resolution (one function):**
 

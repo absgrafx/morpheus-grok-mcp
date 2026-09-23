@@ -44,7 +44,7 @@ uv run morpheus-mcp
 | `MORPHEUS_BASE_URL` | Custom Uplink URL when `custom` → normalized to `…/v1` |
 | `MORPHEUS_KEY_MODE` | `shared` \| `per_bot` (default `shared`) |
 | `MORPHEUS_API_KEY` | Shared Bearer key |
-| `MORPHEUS_API_KEY_<SLOT>` | Discrete per-bot secrets (`SERAPH`, `GARY`, `JOSH`, `TRINITY`, `TANK`, `PHIL`, `MCDUCK`) |
+| `MORPHEUS_API_KEY_<SLOT>` | Discrete per-bot secrets (`COS`, `CTO`, `CISO`, `CIO`, `COO`, `CMO`, `CFO`) |
 | `MORPHEUS_API_KEYS_JSON` | JSON map escape hatch slot → key |
 | `MORPHEUS_AGENT_SLOT` / `MORPHEUS_AGENT` | Slot id when `per_bot` |
 | `MORPHEUS_MODEL_DEFAULT` | Exact model id when `morpheus_chat` omits `model` |
@@ -52,7 +52,7 @@ uv run morpheus-mcp
 | `MORPHEUS_POLICY_CURSOR_EXCEPTION` | Native only if operator names exception |
 | `MORPHEUS_POLICY_FALLBACK_ON_DOWN` | On down → native + `Morpheus didn’t work: <reason>` |
 
-Slot ids (`seraph`, `gary`, …) are **config keys**, not prose names. Master / usage-only keys are **refused** for chat, embeddings, and list_models.
+Slot ids are lowercase role keys (`cos`, `cto`, `ciso`, `cio`, `coo`, `cmo`, `cfo`) matching those roles. The JSON-map escape accepts arbitrary slot keys when needed. Master / usage-only keys are **refused** for chat, embeddings, and list_models.
 
 See `plugin.json` for titles/descriptions and `skills/morpheus-setup/SKILL.md` for the guided setup.
 

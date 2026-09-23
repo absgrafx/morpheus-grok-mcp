@@ -1,0 +1,36 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "morpheus-inference": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/absgrafx/morpheus-grok-mcp.git",
+        "morpheus-mcp"
+      ],
+      "env": {
+        "MORPHEUS_ENDPOINT_MODE": "${MORPHEUS_ENDPOINT_MODE}",
+        "MORPHEUS_BASE_URL": "${MORPHEUS_BASE_URL}",
+        "MORPHEUS_KEY_MODE": "${MORPHEUS_KEY_MODE}",
+        "MORPHEUS_API_KEY": "${MORPHEUS_API_KEY}",
+        "MORPHEUS_API_KEY_SERAPH": "${MORPHEUS_API_KEY_SERAPH}",
+        "MORPHEUS_API_KEY_GARY": "${MORPHEUS_API_KEY_GARY}",
+        "MORPHEUS_API_KEY_JOSH": "${MORPHEUS_API_KEY_JOSH}",
+        "MORPHEUS_API_KEY_TRINITY": "${MORPHEUS_API_KEY_TRINITY}",
+        "MORPHEUS_API_KEY_TANK": "${MORPHEUS_API_KEY_TANK}",
+        "MORPHEUS_API_KEY_PHIL": "${MORPHEUS_API_KEY_PHIL}",
+        "MORPHEUS_API_KEY_MCDUCK": "${MORPHEUS_API_KEY_MCDUCK}",
+        "MORPHEUS_API_KEYS_JSON": "${MORPHEUS_API_KEYS_JSON}",
+        "MORPHEUS_AGENT_SLOT": "${MORPHEUS_AGENT_SLOT}",
+        "MORPHEUS_AGENT": "${MORPHEUS_AGENT}",
+        "MORPHEUS_MODEL_DEFAULT": "${MORPHEUS_MODEL_DEFAULT}",
+        "MORPHEUS_POLICY_MOE_DEFAULT": "${MORPHEUS_POLICY_MOE_DEFAULT}",
+        "MORPHEUS_POLICY_CURSOR_EXCEPTION": "${MORPHEUS_POLICY_CURSOR_EXCEPTION}",
+        "MORPHEUS_POLICY_FALLBACK_ON_DOWN": "${MORPHEUS_POLICY_FALLBACK_ON_DOWN}",
+        "MORPHEUS_UPLINK_KEY_ROLE": "${MORPHEUS_UPLINK_KEY_ROLE}",
+        "MORPHEUS_KEY_ROLE": "${MORPHEUS_KEY_ROLE}"
+      }
+    }
+  }
+}

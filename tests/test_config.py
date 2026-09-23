@@ -137,9 +137,9 @@ def test_per_bot_discrete_preferred_over_json(monkeypatch: pytest.MonkeyPatch) -
 
 def test_per_bot_hard_fail_no_silent_shared(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MORPHEUS_KEY_MODE", "per_bot")
-    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "verification")
+    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "operations")
     monkeypatch.setenv("MORPHEUS_API_KEY", "sk-shared-must-not-fallback")
-    monkeypatch.delenv("MORPHEUS_API_KEY_VERIFICATION", raising=False)
+    monkeypatch.delenv("MORPHEUS_API_KEY_OPERATIONS", raising=False)
     monkeypatch.delenv("MORPHEUS_API_KEYS_JSON", raising=False)
     with pytest.raises(ConfigError, match="per_bot key missing"):
         resolve_api_key()

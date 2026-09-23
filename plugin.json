@@ -74,10 +74,10 @@
         "description": "Per-bot discrete secret for role slot id `builder` when key mode is per_bot.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_VERIFICATION": {
+      "MORPHEUS_API_KEY_OPERATIONS": {
         "type": "string",
-        "title": "API key slot: Verification",
-        "description": "Per-bot discrete secret for role slot id `verification` when key mode is per_bot.",
+        "title": "API key slot: Operations",
+        "description": "Per-bot discrete secret for role slot id `operations` when key mode is per_bot.",
         "secret": true
       },
       "MORPHEUS_API_KEY_COMMS": {
@@ -101,7 +101,7 @@
       "MORPHEUS_AGENT_SLOT": {
         "type": "string",
         "title": "Agent slot id",
-        "description": "Which per_bot slot to use (lowercase role key: cos,cto,ciso,builder,verification,comms,cfo). Also accepts MORPHEUS_AGENT."
+        "description": "Which per_bot slot to use (lowercase role key: cos,cto,ciso,builder,operations,comms,cfo). Also accepts MORPHEUS_AGENT."
       },
       "MORPHEUS_MODEL_DEFAULT": {
         "type": "string",

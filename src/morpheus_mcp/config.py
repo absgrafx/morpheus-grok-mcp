@@ -17,9 +17,9 @@ KNOWN_SLOTS = (
     "cos",
     "cto",
     "ciso",
-    "builder",
-    "operations",
-    "comms",
+    "cio",
+    "coo",
+    "cmo",
     "cfo",
 )
 

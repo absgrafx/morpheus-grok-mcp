@@ -68,22 +68,22 @@
         "description": "Per-bot discrete secret for role slot id `ciso` when key mode is per_bot.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_BUILDER": {
+      "MORPHEUS_API_KEY_CIO": {
         "type": "string",
-        "title": "API key slot: Builder",
-        "description": "Per-bot discrete secret for role slot id `builder` when key mode is per_bot.",
+        "title": "API key slot: CIO",
+        "description": "Per-bot discrete secret for role slot id `cio` when key mode is per_bot.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_OPERATIONS": {
+      "MORPHEUS_API_KEY_COO": {
         "type": "string",
-        "title": "API key slot: Operations",
-        "description": "Per-bot discrete secret for role slot id `operations` when key mode is per_bot.",
+        "title": "API key slot: COO",
+        "description": "Per-bot discrete secret for role slot id `coo` when key mode is per_bot.",
         "secret": true
       },
-      "MORPHEUS_API_KEY_COMMS": {
+      "MORPHEUS_API_KEY_CMO": {
         "type": "string",
-        "title": "API key slot: Comms",
-        "description": "Per-bot discrete secret for role slot id `comms` when key mode is per_bot.",
+        "title": "API key slot: CMO",
+        "description": "Per-bot discrete secret for role slot id `cmo` when key mode is per_bot.",
         "secret": true
       },
       "MORPHEUS_API_KEY_CFO": {
@@ -101,7 +101,7 @@
       "MORPHEUS_AGENT_SLOT": {
         "type": "string",
         "title": "Agent slot id",
-        "description": "Which per_bot slot to use (lowercase role key: cos,cto,ciso,builder,operations,comms,cfo). Also accepts MORPHEUS_AGENT."
+        "description": "Which per_bot slot to use (lowercase role key: cos,cto,ciso,cio,coo,cmo,cfo). Also accepts MORPHEUS_AGENT."
       },
       "MORPHEUS_MODEL_DEFAULT": {
         "type": "string",

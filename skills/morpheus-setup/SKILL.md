@@ -10,7 +10,7 @@ description: >-
 
 Configure the **morpheus-inference** Marketplace MCP so Grok Bot can call Morpheus MoE.
 
-Operator / maintainer handle in public docs: **NomadicRogue**. Crew roles that may assist installs: CoS (vault inject), Builder, Operations.
+Operator / maintainer handle in public docs: **NomadicRogue**. Crew roles that may assist installs: CoS (vault inject), CIO, COO.
 
 ## 1. Endpoint mode
 
@@ -30,7 +30,7 @@ Custom bases are **auto-normalized** to end in `/v1` (warn on stderr, not hard-f
 
 Per-bot resolution order:
 
-1. Discrete slot secret `MORPHEUS_API_KEY_<SLOT>` (SLOT upper role keys: `COS`, `CTO`, `CISO`, `BUILDER`, `OPERATIONS`, `COMMS`, `CFO`)
+1. Discrete slot secret `MORPHEUS_API_KEY_<SLOT>` (SLOT upper role keys: `COS`, `CTO`, `CISO`, `CIO`, `COO`, `CMO`, `CFO`)
 2. JSON map escape `MORPHEUS_API_KEYS_JSON` (`{"cos":"sk-…", …}` — arbitrary slot keys allowed)
 
 **Hard-fail** if per_bot and the slot key is missing — no silent fallback to shared.

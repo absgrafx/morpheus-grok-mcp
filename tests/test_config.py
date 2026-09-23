@@ -87,12 +87,12 @@ def test_shared_key(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_per_bot_discrete_slot(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MORPHEUS_KEY_MODE", "per_bot")
-    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "builder")
-    monkeypatch.setenv("MORPHEUS_API_KEY_BUILDER", "sk-builder-discrete")
+    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "cio")
+    monkeypatch.setenv("MORPHEUS_API_KEY_CIO", "sk-cio-discrete")
     monkeypatch.setenv("MORPHEUS_API_KEY", "sk-shared-should-not-use")
     key, label = resolve_api_key()
-    assert key == "sk-builder-discrete"
-    assert label == "per_bot:discrete:builder"
+    assert key == "sk-cio-discrete"
+    assert label == "per_bot:discrete:cio"
 
 
 def test_per_bot_json_map_escape(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -137,9 +137,9 @@ def test_per_bot_discrete_preferred_over_json(monkeypatch: pytest.MonkeyPatch) -
 
 def test_per_bot_hard_fail_no_silent_shared(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MORPHEUS_KEY_MODE", "per_bot")
-    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "operations")
+    monkeypatch.setenv("MORPHEUS_AGENT_SLOT", "coo")
     monkeypatch.setenv("MORPHEUS_API_KEY", "sk-shared-must-not-fallback")
-    monkeypatch.delenv("MORPHEUS_API_KEY_OPERATIONS", raising=False)
+    monkeypatch.delenv("MORPHEUS_API_KEY_COO", raising=False)
     monkeypatch.delenv("MORPHEUS_API_KEYS_JSON", raising=False)
     with pytest.raises(ConfigError, match="per_bot key missing"):
         resolve_api_key()

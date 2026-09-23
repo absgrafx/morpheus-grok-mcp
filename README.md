@@ -107,3 +107,7 @@ uv run pytest
 ## License
 
 MIT — Copyright (c) 2026 ABSGrafx LLC.
+
+## CI
+
+Pull requests and pushes to `main` run unit tests via GitHub Actions (`uv sync --extra dev` then `uv run pytest`). No live API calls and no secrets in CI.

@@ -7,6 +7,7 @@
     "name": "NomadicRogue / ABSGrafx"
   },
   "repository": "https://github.com/absgrafx/morpheus-grok-mcp",
+  "logo": "assets/logo.png",
   "license": "MIT",
   "keywords": [
     "morpheus",

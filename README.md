@@ -1,5 +1,9 @@
 # morpheus-grok-mcp
 
+<p align="center">
+  <img src="assets/logo.png" alt="Morpheus Inference — Uplink telephone" width="256" height="256" />
+</p>
+
 Grok / Cursor **Marketplace MCP** that routes OpenAI-compatible inference to Morpheus:
 
 - **Public (default):** `https://api.mor.org/api/v1`

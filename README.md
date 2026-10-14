@@ -81,7 +81,7 @@ Then restart Cursor (or run **Developer: Reload Window**) and check **Customize*
 
 ## Configuration
 
-Three settings, plus an optional model list. Set them in Cursor under **Plugins > Configure**. The plugin declares only the names; it never stores the values.
+Three settings, plus an optional model list. Set them in the Cursor dashboard under **Plugins**, at install time or later with **Configure**. The plugin declares only the names; it never stores the values.
 
 | Setting | Variable | Required | Value |
 |---------|----------|----------|-------|
@@ -100,10 +100,10 @@ Per-agent keys and the old policy flags from 0.1.0 were removed. See [docs/DESIG
 
 ## Model hierarchy and fallback
 
-For `morpheus_chat`, the plugin tries models in this order: the `model` the agent passed (if any), then each id in `MORPHEUS_MODELS`. For `morpheus_embed`, it tries `model`, then each of `fallback_models`.
+For `morpheus_chat`, the plugin tries models in this order: the `model` argument (if the agent passed one), then each id in `MORPHEUS_MODELS`. `MORPHEUS_MODELS` applies to chat only, because embedding models are different: for `morpheus_embed`, the plugin tries the `model` argument, then each id in the optional `fallback_models` argument.
 
 - Each model is called once. There are no silent retries.
-- An HTTP error, a timeout (60 seconds by default, or `timeout_seconds`), a network error, or an empty response moves on to the next model, and each failure is reported.
+- An HTTP error, a timeout (60 seconds per model; the agent can change it with the `timeout_seconds` tool argument), a network error, or an empty response moves on to the next model, and each failure is reported.
 - HTTP 401 or 403 means the key was rejected. Every model uses the same key, so the plugin stops there.
 - When no Morpheus model is left, the tool returns `"status": "host_fallback"` with `"use_host_model": true` and this instruction to the agent: "Morpheus could not complete this request. Use your own model to handle it now. First show the user the text in user_alert, then continue with your own model."
 

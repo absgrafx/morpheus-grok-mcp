@@ -17,7 +17,7 @@ Submit only after the v0.2.0 pull request is merged and the `v0.2.0` tag exists.
 | Contact | devs@absgrafx.com |
 | License | MIT |
 | Logo | `assets/logo.png` (256 x 256 PNG, transparent rounded corners) |
-| Category | MCP server / AI models |
+| Category | MCP server / AI models (confirm on the form) |
 | Tags | morpheus, mcp, inference, openai-compatible, decentralized, uplink |
 
 ## Short description

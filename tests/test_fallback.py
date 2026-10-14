@@ -160,3 +160,18 @@ def test_list_models_ok(monkeypatch):
 async def test_mcp_tools_listed():
     names = {t.name for t in await server.mcp.list_tools()}
     assert names == {"morpheus_chat", "morpheus_embed", "morpheus_list_models"}
+
+
+def test_unexpected_exception_message_is_not_shown():
+    from morpheus_mcp.fallback import run_with_fallback
+
+    prompt = "my secret prompt text about the merger"
+
+    def call(model):
+        raise RuntimeError(f"failed while handling: {prompt}")
+
+    seen = []
+    r = run_with_fallback(endpoint="https://x.example/v1", models=["m"], call=call, on_alert=seen.append)
+    assert "secret prompt" not in r["user_alert"] and "secret prompt" not in str(r["alerts"])
+    assert "secret prompt" not in seen[0].text()
+    assert "RuntimeError" in r["alerts"][0]["error"]

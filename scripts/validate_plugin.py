@@ -10,8 +10,8 @@ Checks:
   5. the uvx install is pinned to the tag v<version>, never an unpinned HEAD
   6. the version matches pyproject.toml and the Python package
   7. the logo is a relative path to a square PNG or SVG in the repo
-  8. no root plugin.json
-  9. the contact email is the manifest's author.email everywhere it appears (the plugin uses the Cursor format only)
+  8. no root plugin.json (the plugin uses the Cursor format only)
+  9. the contact email is the manifest's author.email everywhere it appears
 """
 
 from __future__ import annotations

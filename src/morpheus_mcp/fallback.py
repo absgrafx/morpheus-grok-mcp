@@ -19,7 +19,6 @@ from dataclasses import asdict, dataclass
 from typing import Any, Callable
 
 from morpheus_mcp.http_client import MorpheusHTTPError
-from morpheus_mcp.redact import redact
 
 logger = logging.getLogger("morpheus_mcp")
 
@@ -62,10 +61,15 @@ class EmptyResponse(Exception):
 
 def _fail_details(exc: Exception) -> tuple[str, int | None]:
     if isinstance(exc, MorpheusHTTPError):
-        return str(exc), exc.status_code
+        msg = str(exc)
+        prefix = f"HTTP {exc.status_code}: "
+        if exc.status_code and msg.startswith(prefix):
+            msg = msg[len(prefix):]  # the alert already shows the status code
+        return msg, exc.status_code
     if isinstance(exc, EmptyResponse):
         return f"empty response: {exc}", None
-    return redact(f"{type(exc).__name__}: {exc}"), None
+    # The message of an unexpected exception may quote the request, so it is never shown.
+    return f"unexpected error ({type(exc).__name__}; message not shown)", None
 
 
 def run_with_fallback(

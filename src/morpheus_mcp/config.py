@@ -63,7 +63,10 @@ def normalize_uplink_base(url: str) -> tuple[str, list[str]]:
     raw = (url or "").strip()
     if not raw:
         raise ConfigError("MORPHEUS_BASE_URL is required when MORPHEUS_MODE=uplink")
-    parsed = urlparse(raw)
+    try:
+        parsed = urlparse(raw)
+    except ValueError:
+        raise ConfigError("MORPHEUS_BASE_URL has an invalid host or port") from None
     if not parsed.netloc or parsed.scheme.lower() not in ("https", "http"):
         raise ConfigError("MORPHEUS_BASE_URL must be an absolute https:// URL")
     if "@" in parsed.netloc:

@@ -77,3 +77,13 @@ def test_errors_never_contain_key(monkeypatch):
     with pytest.raises(ConfigError) as e:
         load_config()
     assert "sk-test" not in str(e.value)
+
+
+def test_bracketed_host_with_userinfo_is_config_error():
+    import pytest as _pytest
+
+    from morpheus_mcp.config import ConfigError, normalize_uplink_base
+
+    with _pytest.raises(ConfigError) as e:
+        normalize_uplink_base("http://[::1]@evil")
+    assert "evil" not in str(e.value)

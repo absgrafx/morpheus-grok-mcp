@@ -19,10 +19,17 @@ BANNED_NAME_HASHES = {
     "4d52477a3c595861fa8eb6027498da88bc5271603b503dcc5f743472dbf111bf",
     "4b25923a4f31b83195ceb0d160e0a1a6d1556b5a2cd4c582ff40aa0498ae1578",
     "ac34449497d3df1b666c84f4a0c9992dca7f5b0f833e57b81948725b585a320f",
+    "db42328112177c2d6f2f6ca7f33c8e81084b8ff3e14202254137e22673bce2c8",
 }
+# Names also matched as a word prefix (so plurals and suffixes are caught): (prefix length, sha256).
+BANNED_PREFIX_HASHES = {
+    (12, "ad2870710bc39a5dfc7392ba15b2bb3cb29d88d24a9bb8dce06c7a1126f2f828"),
+}
+# Any absolute filesystem path under a top-level directory (for example a home or work directory).
+ABS_PATH_RE = r"(?:^|[\s\"'`(=])/(?!v1\b|chat/completions\b)[A-Za-z_][\w.-]*/[\w.-]"
 # Generic terms, checked literally (regex).
 BANNED_PATTERNS = [
-    r"\bMoE\b", r"(?i)curat", r"(?i)allowlist", r"(?i)\bthis PR\b", r"/workspace", r"/home/box",
+    r"\bMoE\b", r"(?i)curat", r"(?i)allowlist", r"(?i)\bthis PR\b",
     r"(?i)security@", r"\bTODO\b",
 ]
 SCANNED = [
@@ -46,6 +53,11 @@ def terms(text):
 
 def find_banned(text):
     hits = [p for p in BANNED_PATTERNS if re.search(p, text)]
+    if re.search(ABS_PATH_RE, text, re.MULTILINE):
+        hits.append("absolute path")
+    words = set(re.findall(r"[a-z0-9]+", text.lower()))
+    hits += [f"name prefix sha256 {h[:12]}" for n, h in BANNED_PREFIX_HASHES
+             if any(len(w) >= n and hashlib.sha256(w[:n].encode()).hexdigest() == h for w in words)]
     hits += [f"name sha256 {h[:12]}" for h in {hashlib.sha256(t.encode()).hexdigest() for t in terms(text)}
              & BANNED_NAME_HASHES]
     return hits
@@ -64,14 +76,24 @@ def test_public_files_have_no_banned_terms():
         assert not find_banned(f.read_text()), f"{f.relative_to(ROOT)}: {find_banned(f.read_text())}"
 
 
-def _s(*codes):
-    return "".join(map(chr, codes))
+def _h(word):
+    return hashlib.sha256(word.encode()).hexdigest()
 
 
-def test_ban_check_catches_examples():
-    # Names are built from char codes so they are not plain text in this file.
-    assert find_banned("by " + _s(71, 114, 111, 107, 32, 66, 111, 116))     # two-word bot name
-    assert find_banned("ask " + _s(80, 104, 105, 108) + ".")                # crew name, word match
-    assert not find_banned("philosophy and tanker")                          # no partial-word hits
-    assert find_banned("a curated list") and find_banned("see /workspace/x") and find_banned("TODO: x")
+def test_ban_check_catches_examples(monkeypatch):
+    # Synthetic names stand in for the real ones, which are stored only as hashes.
+    monkeypatch.setattr(sys.modules[__name__], "BANNED_NAME_HASHES", {_h("zorblax"), _h("quux bot")})
+    monkeypatch.setattr(sys.modules[__name__], "BANNED_PREFIX_HASHES", {(6, _h("frobni"))})
+    assert find_banned("by Quux Bot") and find_banned("ask Zorblax.")
+    assert not find_banned("zorblaxes and quux")                             # whole-word match only
+    assert find_banned("the Frobnis") and find_banned("frobnicate")          # prefix match (plurals)
+    assert not find_banned("frob")
+    assert find_banned("a curated list") and find_banned("TODO: x")
     assert find_banned("Morpheus MoE") and not find_banned("Moen")
+
+
+def test_absolute_path_check():
+    for t in ("see /srv/data/x", "cd /opt/app", "path=/tmp/a", "`/usr/lib`"):
+        assert find_banned(t), t
+    for t in ("https://api.example.com/v1/chat", "/v1/models", "POST /chat/completions", "and/or", "a / b"):
+        assert not find_banned(t), t

@@ -126,7 +126,7 @@ Every failure produces an alert. Each alert has:
 | `model` | The model that failed |
 | `endpoint` | The full URL that was called |
 | `http_status` | The HTTP status code, or `null` if there was no HTTP response |
-| `error` | A short description: the status code and a parsed error message, or for example `timed out after 60s` |
+| `error` | A short description: a parsed error message (the status code is in `http_status`), or for example `timed out after 60s` |
 | `time` | Local time with UTC offset |
 | `action` | What was done instead |
 
@@ -141,7 +141,7 @@ The alert reaches you and the agent in three ways:
 Example `user_alert`:
 
 ```text
-Morpheus alert at 2026-10-14T16:43:57-04:00: model no-such-model-xyz on https://uplink.example.com/v1/chat/completions failed (HTTP 404; HTTP 404: invalid_request_error: model "no-such-model-xyz" not found in catalog). Action: Tried the next Morpheus model, deepseek-v4-flash.
+Morpheus alert at 2026-10-14T16:43:57-04:00: model no-such-model-xyz on https://uplink.example.com/v1/chat/completions failed (HTTP 404; invalid_request_error: model "no-such-model-xyz" not found in catalog). Action: Tried the next Morpheus model, deepseek-v4-flash.
 ```
 
 ## Privacy
@@ -151,6 +151,7 @@ Morpheus alert at 2026-10-14T16:43:57-04:00: model no-such-model-xyz on https://
 - The plugin has no telemetry and stores nothing on disk.
 - Logs go to standard error only. By default only warnings (alerts and URL fixes) are logged. Starting the server with `morpheus-mcp --verbose` adds one line per request: method, URL, model id and the last four characters of the key. Message text is never logged.
 - Every log line, alert and error passes through redaction: the configured key is masked whatever its format, as are `sk-` keys, Bearer tokens and credentials in URLs.
+- Masking matches the key's exact text. A key that is split, base64-encoded, or URL-encoded with reserved characters is not masked. A key shorter than 4 characters is not masked.
 - The key is passed to the server as an environment variable by Cursor. It is not written to this repository, and CI uses no keys.
 
 ## Supply chain

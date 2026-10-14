@@ -42,7 +42,7 @@ flags (`MORPHEUS_POLICY_*`). They are gone. The server no longer reads them.
 - **Separate keys per agent or per project:** give each install or environment its own
   `MORPHEUS_API_KEY`. If you run your own Uplink, issue one inference key per agent there; Uplink
   tracks usage per key.
-- **Do not use an Uplink admin or usage-only key for inference.** Use an inference key.
+- **On an Uplink, use a Prompt key or an ephemeral key, not the Master key.** The Master key also has admin rights.
 - **Default model:** put it first in `MORPHEUS_MODELS`.
 - **Policy flags:** replaced by the opt-in rule in `skills/use-morpheus-model`: the agent uses
   Morpheus when the user asks for it or has said they want it, and otherwise works as usual.

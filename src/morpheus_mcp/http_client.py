@@ -64,7 +64,7 @@ def _request(
             c.close()
     if resp.status_code >= 400:
         raise MorpheusHTTPError(
-            redact(f"HTTP {resp.status_code}: {resp.text[:300]}"), status_code=resp.status_code
+            redact(f"HTTP {resp.status_code}: {resp.text[:300].strip()}"), status_code=resp.status_code
         )
     try:
         return resp.json()

@@ -1,0 +1,49 @@
+{
+  "name": "morpheus-inference",
+  "version": "0.2.0",
+  "description": "Run chat and embeddings on Morpheus decentralized inference (api.mor.org or your own Uplink).",
+  "author": {
+    "name": "ABSGrafx",
+    "email": "devs@absgrafx.com"
+  },
+  "homepage": "https://github.com/absgrafx/morpheus-grok-mcp#readme",
+  "repository": "https://github.com/absgrafx/morpheus-grok-mcp",
+  "license": "MIT",
+  "logo": "assets/logo.png",
+  "keywords": [
+    "morpheus",
+    "mcp",
+    "inference",
+    "openai-compatible",
+    "decentralized",
+    "uplink"
+  ],
+  "variables": {
+    "type": "object",
+    "properties": {
+      "MORPHEUS_API_KEY": {
+        "type": "string",
+        "title": "Morpheus API key",
+        "description": "Your inference key (sk-...) from app.mor.org, or an inference key issued by your own Uplink. Stored by Cursor, never in this repo."
+      },
+      "MORPHEUS_MODE": {
+        "type": "string",
+        "title": "Mode",
+        "description": "api.mor.org = the public Morpheus API. uplink = your own Uplink (set the base URL).",
+        "enum": ["api.mor.org", "uplink"],
+        "default": "api.mor.org"
+      },
+      "MORPHEUS_BASE_URL": {
+        "type": "string",
+        "title": "Base URL",
+        "description": "Uplink mode only: your Uplink's OpenAI-compatible base, for example https://uplink.example.com/v1. Ignored in api.mor.org mode."
+      },
+      "MORPHEUS_MODELS": {
+        "type": "string",
+        "title": "Model hierarchy",
+        "description": "Optional. Comma-separated model ids in order of preference. On an error or timeout the next model is tried; if all fail, the tool tells your agent to use its own model."
+      }
+    },
+    "required": ["MORPHEUS_API_KEY", "MORPHEUS_MODE"]
+  }
+}

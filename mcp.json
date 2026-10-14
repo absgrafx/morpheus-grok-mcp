@@ -6,30 +6,14 @@
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/absgrafx/morpheus-grok-mcp.git",
+        "git+https://github.com/absgrafx/morpheus-grok-mcp@v0.2.0",
         "morpheus-mcp"
       ],
       "env": {
-        "MORPHEUS_ENDPOINT_MODE": "${MORPHEUS_ENDPOINT_MODE}",
-        "MORPHEUS_BASE_URL": "${MORPHEUS_BASE_URL}",
-        "MORPHEUS_KEY_MODE": "${MORPHEUS_KEY_MODE}",
         "MORPHEUS_API_KEY": "${MORPHEUS_API_KEY}",
-        "MORPHEUS_API_KEY_COS": "${MORPHEUS_API_KEY_COS}",
-        "MORPHEUS_API_KEY_CTO": "${MORPHEUS_API_KEY_CTO}",
-        "MORPHEUS_API_KEY_CISO": "${MORPHEUS_API_KEY_CISO}",
-        "MORPHEUS_API_KEY_CIO": "${MORPHEUS_API_KEY_CIO}",
-        "MORPHEUS_API_KEY_COO": "${MORPHEUS_API_KEY_COO}",
-        "MORPHEUS_API_KEY_CMO": "${MORPHEUS_API_KEY_CMO}",
-        "MORPHEUS_API_KEY_CFO": "${MORPHEUS_API_KEY_CFO}",
-        "MORPHEUS_API_KEYS_JSON": "${MORPHEUS_API_KEYS_JSON}",
-        "MORPHEUS_AGENT_SLOT": "${MORPHEUS_AGENT_SLOT}",
-        "MORPHEUS_AGENT": "${MORPHEUS_AGENT}",
-        "MORPHEUS_MODEL_DEFAULT": "${MORPHEUS_MODEL_DEFAULT}",
-        "MORPHEUS_POLICY_MOE_DEFAULT": "${MORPHEUS_POLICY_MOE_DEFAULT}",
-        "MORPHEUS_POLICY_CURSOR_EXCEPTION": "${MORPHEUS_POLICY_CURSOR_EXCEPTION}",
-        "MORPHEUS_POLICY_FALLBACK_ON_DOWN": "${MORPHEUS_POLICY_FALLBACK_ON_DOWN}",
-        "MORPHEUS_UPLINK_KEY_ROLE": "${MORPHEUS_UPLINK_KEY_ROLE}",
-        "MORPHEUS_KEY_ROLE": "${MORPHEUS_KEY_ROLE}"
+        "MORPHEUS_MODE": "${MORPHEUS_MODE}",
+        "MORPHEUS_BASE_URL": "${MORPHEUS_BASE_URL}",
+        "MORPHEUS_MODELS": "${MORPHEUS_MODELS}"
       }
     }
   }

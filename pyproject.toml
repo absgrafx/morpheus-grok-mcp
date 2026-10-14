@@ -1,24 +1,24 @@
 [project]
 name = "morpheus-mcp"
-version = "0.1.0"
-description = "Morpheus MoE via api.mor.org or private Uplink — Marketplace MCP for Grok Bot"
+version = "0.2.0"
+description = "Run chat and embeddings on Morpheus decentralized inference (api.mor.org or your own Uplink)."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
 authors = [
-  { name = "NomadicRogue / ABSGrafx" },
+  { name = "ABSGrafx", email = "devs@absgrafx.com" },
 ]
-keywords = ["morpheus", "mcp", "openai-compatible", "moe", "uplink", "inference"]
+keywords = ["morpheus", "mcp", "inference", "openai-compatible", "decentralized", "uplink"]
 dependencies = [
   "mcp>=1.9,<2",
   "httpx>=0.27",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "jsonschema>=4.18"]
 
 [project.urls]
-Homepage = "https://github.com/absgrafx/morpheus-grok-mcp"
+Homepage = "https://github.com/absgrafx/morpheus-grok-mcp#readme"
 Repository = "https://github.com/absgrafx/morpheus-grok-mcp"
 Issues = "https://github.com/absgrafx/morpheus-grok-mcp/issues"
 
@@ -37,7 +37,10 @@ include = [
   "src/morpheus_mcp",
   "skills",
   "docs",
-  "plugin.json",
+  ".cursor-plugin",
+  "schemas",
+  "scripts",
+  "assets",
   "mcp.json",
   "README.md",
   "LICENSE",

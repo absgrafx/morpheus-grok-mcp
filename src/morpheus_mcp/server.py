@@ -36,6 +36,19 @@ mcp = FastMCP(
 )
 
 
+def server_version() -> str:
+    """This package's version (installed metadata, else __version__), not the MCP library's."""
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+        return version("morpheus-mcp")
+    except PackageNotFoundError:
+        return __version__
+
+
+# FastMCP has no version argument; without this the MCP library's own version is reported.
+mcp._mcp_server.version = server_version()
+
+
 def _dump(obj: dict[str, Any]) -> str:
     return json.dumps(obj, ensure_ascii=False)
 

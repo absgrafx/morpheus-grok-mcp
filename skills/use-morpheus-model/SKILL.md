@@ -19,9 +19,9 @@ Otherwise, keep working the way you normally do. This skill does not replace you
 
 ## How to call
 
-- `morpheus_chat`: pass `messages` in the OpenAI chat format. `model` is optional: if you leave it out, the models the user set in **Model hierarchy** are tried in order.
+- `morpheus_chat`: pass `messages` in the OpenAI chat format. `model` is optional: if you leave it out, the models the user set in **Model hierarchy** are tried in order. If you pass no `model` and the hierarchy is empty, nothing is sent to Morpheus and the result is `host_fallback` with an alert; tell the user to set **Model hierarchy** or name a model.
 - `morpheus_embed`: pass `input` and `model`, plus `fallback_models` if you want other embedding models tried.
-- `morpheus_list_models`: shows the model ids on the endpoint and the configured hierarchy. Use exact ids from this list.
+- `morpheus_list_models`: shows the model ids on the endpoint and the configured hierarchy. Use exact ids from this list. If it fails, it also returns `host_fallback` with an alert.
 
 Never put API keys, passwords or wallet secrets in messages or tool arguments.
 

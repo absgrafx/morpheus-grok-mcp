@@ -10,7 +10,8 @@ Checks:
   5. the uvx install is pinned to the tag v<version>, never an unpinned HEAD
   6. the version matches pyproject.toml and the Python package
   7. the logo is a relative path to a square PNG or SVG in the repo
-  8. no root plugin.json (the plugin uses the Cursor format only)
+  8. no root plugin.json
+  9. the contact email is the manifest's author.email everywhere it appears (the plugin uses the Cursor format only)
 """
 
 from __future__ import annotations
@@ -103,6 +104,12 @@ def main() -> int:
                 if not arg.endswith(f"@v{version}"):
                     errors.append(f"{server}: git install {arg!r} must be pinned to @v{version}")
 
+    # Every @v<x.y.z> install pin in the docs must match the version.
+    for rel in ("mcp.json", "README.md", "CHANGELOG.md", "docs/listing/cursor-directory.md"):
+        for pin in re.findall(r"morpheus-grok-mcp(?:\.git)?@([^\s\"'`)]+)", (ROOT / rel).read_text()):
+            if pin != f"v{version}":
+                errors.append(f"{rel}: install pin @{pin} != @v{version}")
+
     logo = manifest.get("logo")
     if logo:
         if logo.startswith("/") or ".." in Path(logo).parts or "://" in logo:
@@ -119,6 +126,17 @@ def main() -> int:
         elif p.suffix != ".svg":
             errors.append("logo must be .png or .svg")
 
+    # Contact email: the manifest's author.email is the one source. To change it, edit it there,
+    # then replace the old value in the files below; this check fails until they all match.
+    contact = (manifest.get("author") or {}).get("email", "")
+    for rel in ("pyproject.toml", "README.md", "docs/listing/cursor-directory.md"):
+        text = (ROOT / rel).read_text()
+        found = set(re.findall(r"[A-Za-z0-9._%+-]+@absgrafx\.com", text))
+        if contact not in text:
+            errors.append(f"{rel}: contact {contact!r} from the manifest is missing")
+        if found - {contact}:
+            errors.append(f"{rel}: other absgrafx.com address(es) {sorted(found - {contact})}")
+
     if (ROOT / "plugin.json").exists():
         errors.append("root plugin.json present; this plugin uses .cursor-plugin/plugin.json only")
 
@@ -128,7 +146,7 @@ def main() -> int:
             print(" -", e)
         return 1
     print(f"OK: manifest {manifest['name']} v{version}, mcp.json, {len(declared)} variables "
-          f"({', '.join(sorted(declared))}), all ${{VAR}} declared, pin @v{version}")
+          f"({', '.join(sorted(declared))}), all ${{VAR}} declared, pin @v{version}, contact {contact}")
     return 0
 
 

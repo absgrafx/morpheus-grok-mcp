@@ -27,8 +27,8 @@ This plugin needs user-set values (key, mode, base URL) passed to the MCP server
 |----------|----------|---------|
 | `MORPHEUS_API_KEY` | yes | Inference key |
 | `MORPHEUS_MODE` | yes (default `api.mor.org`) | `api.mor.org` or `uplink` |
-| `MORPHEUS_BASE_URL` | Uplink mode only | Uplink base ending in `/v1` |
-| `MORPHEUS_MODELS` | no | Model hierarchy, comma-separated, most preferred first |
+| `MORPHEUS_BASE_URL` | Uplink mode only | Uplink base ending in `/v1`; https only (http for localhost, 127.0.0.1, ::1); no user name or password |
+| `MORPHEUS_MODELS` | no | Chat model hierarchy, comma-separated, most preferred first |
 
 A value Cursor leaves as a literal `${VAR}` placeholder is treated as unset.
 
@@ -51,6 +51,7 @@ flags (`MORPHEUS_POLICY_*`). They are gone. The server no longer reads them.
 
 See the README sections "Model hierarchy and fallback" and "Alerts". In short: each model is
 called once, in order; any error, timeout or empty response moves to the next model and records an
-alert; a 401/403 stops at once, since every model uses the same key; when nothing is left, the
+alert; with no model passed and an empty hierarchy nothing is called and the result is host_fallback at once; a 401/403 stops at once, since every model uses the same key; when nothing is left, the
 result has `status: "host_fallback"` and tells the agent to use its own model. The handoff text is
-fixed by the server and never includes model output.
+fixed by the server and never includes model output. Alerts carry a parsed, length-capped error
+message, never the raw response body; the configured key and the request text are always removed.

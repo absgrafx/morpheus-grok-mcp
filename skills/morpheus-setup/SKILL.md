@@ -12,10 +12,10 @@ The plugin has three settings and one optional list. The user sets them in Curso
 
 | Setting | Variable | Notes |
 |---------|----------|-------|
-| API key | `MORPHEUS_API_KEY` | An inference key from app.mor.org, or one issued by the user's own Uplink. |
+| API key | `MORPHEUS_API_KEY` | A key from app.mor.org, or a Prompt or ephemeral key from the user's own Uplink (not the Master key). |
 | Mode | `MORPHEUS_MODE` | `api.mor.org` (default) or `uplink`. |
-| Base URL | `MORPHEUS_BASE_URL` | Uplink mode only, for example `https://uplink.example.com/v1`. Ignored in api.mor.org mode, which always uses `https://api.mor.org/api/v1`. |
-| Model hierarchy (optional) | `MORPHEUS_MODELS` | Comma-separated model ids, most preferred first. |
+| Base URL | `MORPHEUS_BASE_URL` | Uplink mode only, for example `https://uplink.example.com/v1`. Must be `https://` (`http://` only for localhost, 127.0.0.1 or ::1) with no user name or password in it. Ignored in api.mor.org mode, which always uses `https://api.mor.org/api/v1`. |
+| Model hierarchy (optional) | `MORPHEUS_MODELS` | Chat models to try, comma-separated, most preferred first. |
 
 ## Check it works
 

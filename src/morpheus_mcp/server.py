@@ -14,16 +14,34 @@ from morpheus_mcp import __version__
 from morpheus_mcp.config import ConfigError, load_config
 from morpheus_mcp.fallback import Alert, EmptyResponse, handoff, now_iso, run_with_fallback
 from morpheus_mcp.http_client import (
-    DEFAULT_TIMEOUT_SECONDS,
+    clamp_timeout,
     MorpheusHTTPError,
     chat_completions,
     embeddings,
     list_models,
 )
-from morpheus_mcp.redact import redact
+from morpheus_mcp.redact import RedactingFilter, redact
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s", stream=sys.stderr)
 logger = logging.getLogger("morpheus_mcp")
+
+
+def setup_logging(verbose: bool = False) -> None:
+    """stderr logging: WARNING by default (alerts), INFO per request only with --verbose.
+
+    Every record passes through RedactingFilter, so a registered key never reaches stderr.
+    """
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
+    handler.addFilter(RedactingFilter())
+    root = logging.getLogger()
+    for h in list(root.handlers):
+        root.removeHandler(h)
+    root.addHandler(handler)
+    root.setLevel(logging.WARNING)
+    logger.setLevel(logging.INFO if verbose else logging.WARNING)
+
+
+setup_logging()
 
 mcp = FastMCP(
     "morpheus-inference",
@@ -173,7 +191,7 @@ async def morpheus_chat(
     no Morpheus model worked: answer with your own model and show the user `user_alert`.
     """
     result = await asyncio.to_thread(do_chat, messages, model, temperature, max_tokens, tools,
-                                     tool_choice, timeout_seconds or DEFAULT_TIMEOUT_SECONDS)
+                                     tool_choice, clamp_timeout(timeout_seconds))
     await _notify(ctx, result)
     return _dump(result)
 
@@ -191,7 +209,7 @@ async def morpheus_embed(
     Same alert and host_fallback rules as morpheus_chat.
     """
     result = await asyncio.to_thread(do_embed, input, model, fallback_models,
-                                     timeout_seconds or DEFAULT_TIMEOUT_SECONDS)
+                                     clamp_timeout(timeout_seconds))
     await _notify(ctx, result)
     return _dump(result)
 
@@ -205,7 +223,8 @@ async def morpheus_list_models(ctx: Context | None = None) -> str:
 
 
 def main() -> None:
-    """stdio entry point (uvx morpheus-mcp / python -m morpheus_mcp)."""
+    """stdio entry point (uvx morpheus-mcp / python -m morpheus_mcp). Pass --verbose for INFO logs."""
+    setup_logging(verbose="--verbose" in sys.argv[1:])
     logger.info("morpheus-inference MCP v%s starting (stdio)", __version__)
     mcp.run(transport="stdio")
 

@@ -16,6 +16,8 @@ import re
 from dataclasses import dataclass
 from urllib.parse import urlparse, urlunparse
 
+from morpheus_mcp.redact import register_secret
+
 logger = logging.getLogger("morpheus_mcp")
 
 PUBLIC_BASE = "https://api.mor.org/api/v1"
@@ -30,6 +32,7 @@ _MODE_ALIASES = {
 
 # Trailing resource paths sometimes pasted into a base URL by mistake
 _RESOURCE_SUFFIXES = ("/chat/completions", "/completions", "/embeddings", "/models", "/usage")
+LOCAL_HOSTS = ("localhost", "127.0.0.1", "::1")
 _PLACEHOLDER = re.compile(r"^\$\{[A-Za-z_][A-Za-z0-9_]*\}$")
 
 
@@ -61,8 +64,23 @@ def normalize_uplink_base(url: str) -> tuple[str, list[str]]:
     if not raw:
         raise ConfigError("MORPHEUS_BASE_URL is required when MORPHEUS_MODE=uplink")
     parsed = urlparse(raw)
-    if parsed.scheme not in ("https", "http") or not parsed.netloc:
-        raise ConfigError(f"MORPHEUS_BASE_URL must be an absolute http(s) URL, got {raw!r}")
+    if not parsed.netloc or parsed.scheme.lower() not in ("https", "http"):
+        raise ConfigError("MORPHEUS_BASE_URL must be an absolute https:// URL")
+    if "@" in parsed.netloc:
+        raise ConfigError(
+            "MORPHEUS_BASE_URL must not contain a user name or password; put the key in MORPHEUS_API_KEY"
+        )
+    try:
+        host = (parsed.hostname or "").lower()
+        parsed.port  # noqa: B018 — raises on a bad port
+    except ValueError:
+        raise ConfigError("MORPHEUS_BASE_URL has an invalid host or port") from None
+    if not host:
+        raise ConfigError("MORPHEUS_BASE_URL must include a host")
+    if parsed.scheme.lower() == "http" and host not in LOCAL_HOSTS:
+        raise ConfigError(
+            "MORPHEUS_BASE_URL must use https://; http:// is allowed only for localhost, 127.0.0.1 and ::1"
+        )
 
     path = (parsed.path or "").rstrip("/")
     for suffix in _RESOURCE_SUFFIXES:
@@ -77,7 +95,7 @@ def normalize_uplink_base(url: str) -> tuple[str, list[str]]:
         warnings.append("appended /v1 to the base URL")
     if not path.startswith("/"):
         path = "/" + path
-    return urlunparse((parsed.scheme, parsed.netloc, path, "", "", "")), warnings
+    return urlunparse((parsed.scheme.lower(), parsed.netloc, path, "", "", "")), warnings
 
 
 def parse_models(raw: str | None) -> tuple[str, ...]:
@@ -100,6 +118,7 @@ class RuntimeConfig:
 
 
 def load_config() -> RuntimeConfig:
+    register_secret(env("MORPHEUS_API_KEY"))  # before anything can log or raise
     mode = normalize_mode(env("MORPHEUS_MODE"))
     warnings: list[str] = []
     if mode == MODE_PUBLIC:
@@ -109,6 +128,7 @@ def load_config() -> RuntimeConfig:
         for w in warnings:
             logger.warning("morpheus_mcp: %s", w)
     key = env("MORPHEUS_API_KEY")
+    register_secret(key)
     if not key:
         raise ConfigError("MORPHEUS_API_KEY is not set (set it in Plugins > Configure)")
     return RuntimeConfig(

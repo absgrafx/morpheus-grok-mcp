@@ -57,7 +57,7 @@ def test_http_error_falls_back_to_next_model_with_alert(monkeypatch):
     assert r["status"] == "ok" and r["model_used"] == "b"
     (a,) = r["alerts"]
     assert a["model"] == "a" and a["endpoint"] == ENDPOINT and a["http_status"] == 502
-    assert "bad gateway" in a["error"] and a["time"] and "next Morpheus model, b" in a["action"]
+    assert "bad gateway" not in a["error"] and "non-JSON error body" in a["error"] and a["time"] and "next Morpheus model, b" in a["action"]
     assert "Morpheus alert" in r["user_alert"] and "HTTP 502" in r["user_alert"]
     assert "Show the user" in r["agent_instructions"]
 
@@ -103,8 +103,11 @@ def test_auth_error_goes_straight_to_host(monkeypatch):
 
 
 def test_no_model_configured_hands_back_with_alert():
-    r = server.do_chat(MSG, client=client_for({}, []))
-    assert r["status"] == "host_fallback" and "MORPHEUS_MODELS is empty" in r["user_alert"]
+    seen = []
+    r = server.do_chat(MSG, client=client_for({}, seen))
+    assert seen == []  # nothing was sent to Morpheus
+    assert r["status"] == "host_fallback" and r["use_host_model"] is True
+    assert "MORPHEUS_MODELS is empty" in r["user_alert"] and len(r["alerts"]) == 1
 
 
 def test_config_error_hands_back_with_alert(monkeypatch):

@@ -122,6 +122,8 @@ def same_model(requested: str, served: str) -> bool:
     both have the same org, or neither has one); or a pair in MODEL_ALIASES.
     Anything else is a substitution.
     """
+    if not isinstance(requested, str) or not isinstance(served, str):
+        return False
     if INVALID_MODEL_NAME in (requested, served):
         return False
     a, b = _norm(requested), _norm(served)
@@ -178,13 +180,15 @@ def run_with_fallback(
         return handoff(alerts)
 
     for i, model in enumerate(models):
-        shown = clean_model_name(model, request_texts) or model
+        # Model ids come from the request or MORPHEUS_MODELS. They are checked for allowed characters,
+        # length and the key, but not the prompt-echo check: a prompt may name them.
+        shown = clean_model_name(model) or model
         try:
             data = call(model)
         except Exception as exc:  # noqa: BLE001 — every failure becomes an alert
             err, code = _fail_details(exc)
             nxt = models[i + 1] if i + 1 < len(models) else None
-            nxt = clean_model_name(nxt, request_texts) if nxt else None
+            nxt = clean_model_name(nxt) if nxt else None
             if code in AUTH_CODES:
                 action = ("The API key was rejected, so other Morpheus models were not tried; "
                           "returned control to the host model.")
@@ -197,16 +201,26 @@ def run_with_fallback(
             alert(Alert(shown, endpoint, err, code, clock(), action))
             continue
         data = dict(data)
-        requested = clean_model_name(model, request_texts) or model
-        served = clean_model_name(data.pop("served_model", None), request_texts)
-        if served and " " in served and not same_model(requested, served):
-            # A served name may contain spaces only when it names the requested model
-            # (or an alias); otherwise a sentence could reach the agent as a model name.
-            served = INVALID_MODEL_NAME
+        requested = shown
+        raw = data.pop("served_model", None)
+        raw = raw.strip() if isinstance(raw, str) else None
+        # Substitution is decided on the raw names; the raw served name is never displayed.
+        substituted = bool(raw) and not same_model(model, raw)
+        if not raw:
+            served = None
+        elif not substituted:
+            # The served name is the requested model: skip only the prompt-echo check.
+            served = clean_model_name(raw)
+        else:
+            served = clean_model_name(raw, request_texts)
+            if served and " " in served:
+                # A served name may contain spaces only when it names the requested model
+                # (or an alias); otherwise a sentence could reach the agent as a model name.
+                served = INVALID_MODEL_NAME
         out: dict[str, Any] = {"status": "ok", "model_used": served or requested,
                                "requested_model": requested, "endpoint": endpoint, **data}
-        if served and not same_model(requested, served):
-            alert(SubstitutionAlert(requested, served, endpoint, clock()))
+        if substituted:
+            alert(SubstitutionAlert(requested, served or INVALID_MODEL_NAME, endpoint, clock()))
         if alerts:
             out["alerts"] = [asdict(a) for a in alerts]
             out["user_alert"] = "\n".join(a.text() for a in alerts)

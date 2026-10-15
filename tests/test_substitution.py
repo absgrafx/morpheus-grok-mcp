@@ -205,3 +205,15 @@ def test_org_added_by_endpoint_is_noted():
     (a,) = r["alerts"]
     assert a["type"] == "model_substituted" and a["severity"] == "info"
     assert "served by evilorg/llama-3-70b instead of llama-3-70b" in r["user_alert"]
+
+
+def test_model_named_in_prompt_is_not_hidden():
+    msgs = [{"role": "user", "content": "Ask deepseek-v4-flash to reply pong"}]
+    r = server.do_chat(msgs, model="deepseek-v4-flash", client=chat_client("deepseek-v4-flash"))
+    assert r["model_used"] == "deepseek-v4-flash" and r["requested_model"] == "deepseek-v4-flash"
+    assert "alerts" not in r and "user_alert" not in r
+
+
+def test_served_name_matching_request_still_checks_characters():
+    r = server.do_chat(MSG, model="a", client=chat_client("a\x1b[31m"))
+    assert r["model_used"] == INVALID

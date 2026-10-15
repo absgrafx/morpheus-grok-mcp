@@ -1,6 +1,23 @@
 # Changelog
 
-## 0.2.0 (unreleased; tag `v0.2.0` is created after merge)
+## 0.2.1 (unreleased; tag `v0.2.1` is created after merge)
+
+### Fixed
+- `model_used` now reports the model named in the response's `model` field for chat and embeddings, falling back to the requested name only when the field is absent. Before, it always showed the requested name, even when the endpoint served another model (for example, api.mor.org served `nonexistent-model-xyz` with `google-gemma-4-31b-it`).
+
+### Added
+- `requested_model` on every successful chat and embedding result.
+- An informational `model_substituted` entry (`requested`, `served`, `endpoint`, `time`, `severity: info`) when the endpoint chose a different model than the one requested. Names match if they differ only in letter case or separators, or if the pair is in the alias list (`BGE-EN-ICL` and `text-embedding-bge-en-icl`). Its text (`served by "<model>" instead of "<requested>" (the endpoint picked the model)`) is added to `user_alert`, the status stays `ok`, and the agent is told to mention it, not to treat it as a failure.
+
+### Security
+- Model names from the endpoint, and requested names when shown, are limited to letters, digits and `. _ : / @ + -`, up to 100 characters. A name from the endpoint may contain single spaces only if it names the requested model or an alias of it; requested names may contain single spaces. A served name that is not the requested model or an alias must also be at most 64 characters with at most 8 parts, and no part may be on a short deny-list (`system`, `ignore`, `previous`, `instruction`, `instructions`, `assistant`, `user`, `prompt`, `paste`, `api`, `apikey`, `key`, `secret`, `password`, `token`, `override`). Parts are also split at camelCase and letter-digit boundaries for the deny-list check. Served names are quoted in `user_alert`. A name with anything else, a truncated name, or one that contains the key or repeats the request text is shown as `(invalid model name)` in every output.
+- Log lines and alert error text have newlines, ANSI escapes and other control characters replaced with a space, and the `--verbose` request line shows the cleaned model name in quotes.
+
+### Changed
+- README Testing: recommends warm models, notes that `BGE-EN-ICL` embeddings work through an Uplink and hosted embedding models may be cold, and replaces the fallback checks with `BGE-EN-ICL,deepseek-v4-flash` and `BGE-EN-ICL,Aion 3.5 Mini`.
+- The install pin moves to `@v0.2.1`.
+
+## 0.2.0 (2026-10-15)
 
 ### Changed
 - The manifest moved to `.cursor-plugin/plugin.json` (Cursor Plugin format), so `logo` and `variables` are valid. The root `plugin.json` was removed.

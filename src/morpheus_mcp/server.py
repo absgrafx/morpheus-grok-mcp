@@ -19,6 +19,7 @@ from morpheus_mcp.http_client import (
     chat_completions,
     embeddings,
     list_models,
+    request_texts,
 )
 from morpheus_mcp.redact import RedactingFilter, redact
 
@@ -89,8 +90,10 @@ async def _notify(ctx: Context | None, result: dict[str, Any]) -> None:
     """Send alerts to the client as MCP log messages as well as in the result."""
     if ctx is None or not result.get("user_alert"):
         return
+    alerts = result.get("alerts") or []
+    info_only = bool(alerts) and all(a.get("severity") == "info" for a in alerts)
     try:
-        await ctx.warning(result["user_alert"])
+        await (ctx.info if info_only else ctx.warning)(result["user_alert"])
     except Exception:  # noqa: BLE001 — a client without logging support must not break the call
         pass
 
@@ -118,6 +121,7 @@ def extract_chat(data: dict[str, Any]) -> dict[str, Any]:
         "finish_reason": choice.get("finish_reason"),
         "id": data.get("id"),
         "usage": data.get("usage"),
+        "served_model": data.get("model"),
     }
 
 
@@ -134,7 +138,9 @@ def do_chat(messages, model=None, temperature=None, max_tokens=None, tools=None,
         return extract_chat(chat_completions(cfg.base_url, cfg.api_key, body=body,
                                              timeout=timeout_seconds, client=client))
 
-    return run_with_fallback(endpoint=endpoint, models=_order(model, cfg.models), call=call)
+    texts = request_texts({"messages": messages, "tools": tools})
+    return run_with_fallback(endpoint=endpoint, models=_order(model, cfg.models), call=call,
+                             request_texts=texts)
 
 
 def do_embed(input, model, fallback_models=None, timeout_seconds=None, client=None) -> dict[str, Any]:
@@ -149,9 +155,10 @@ def do_embed(input, model, fallback_models=None, timeout_seconds=None, client=No
                           timeout=timeout_seconds, client=client)
         if not data.get("data"):
             raise EmptyResponse("no embeddings in the response")
-        return {"data": data.get("data"), "usage": data.get("usage")}
+        return {"data": data.get("data"), "usage": data.get("usage"), "served_model": data.get("model")}
 
-    return run_with_fallback(endpoint=endpoint, models=_order(model, fallback_models or []), call=call)
+    return run_with_fallback(endpoint=endpoint, models=_order(model, fallback_models or []), call=call,
+                             request_texts=request_texts({"input": input}))
 
 
 def do_list_models(timeout_seconds=None, client=None) -> dict[str, Any]:

@@ -29,7 +29,7 @@ Never put API keys, passwords or wallet secrets in messages or tool arguments.
 
 Every result is JSON with a `status`.
 
-- `"ok"`: use `content` (or `tool_calls`). If the result also has `user_alert`, an earlier model failed and the next one answered. Show the `user_alert` text to the user along with the answer.
+- `"ok"`: use `content` (or `tool_calls`). `model_used` is the model that answered and `requested_model` is the one asked for. If the result has `user_alert`, an earlier model failed, or the endpoint answered with a different model (informational). Show the `user_alert` text to the user along with the answer.
 - `"host_fallback"`: no Morpheus model could answer. Show the `user_alert` text to the user, then handle the request with your own model.
 
-Each alert gives the model, the endpoint, the HTTP code or error message, the time, and what was done instead. Do not hide or reword alerts, and do not call Morpheus again for the same request unless the user asks.
+Each alert gives the model, the endpoint, the HTTP code or error message, the time, and what was done instead. A `model_substituted` note (`severity: info`) gives the requested and served model, the endpoint and the time instead; it is not a failure. Do not hide or reword alerts, and do not call Morpheus again for the same request unless the user asks.

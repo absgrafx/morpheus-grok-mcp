@@ -7,7 +7,7 @@ from typing import Any
 
 import httpx
 
-from morpheus_mcp.redact import redact, redact_key_id
+from morpheus_mcp.redact import strip_control, redact, redact_key_id
 
 logger = logging.getLogger("morpheus_mcp")
 
@@ -73,13 +73,13 @@ def safe_error_detail(resp: httpx.Response, api_key: str, texts: list[str]) -> s
             msg = data.get("detail") if isinstance(data.get("detail"), str) else data.get("message")
     if not isinstance(msg, str) or not msg.strip():
         return "JSON error body without a message (not shown)"
-    msg = " ".join(msg.split())
+    msg = " ".join(strip_control(msg).split())
     if _quotes_request(msg, texts):
         msg = "(upstream message withheld: it quoted the request)"
     msg = redact(msg, [api_key])[:MAX_ERROR_MESSAGE]
     out = msg
     if isinstance(typ, (str, int)) and str(typ).strip():
-        out = f"{redact(str(typ), [api_key])[:MAX_ERROR_TYPE]}: {msg}"
+        out = f"{' '.join(strip_control(redact(str(typ), [api_key])).split())[:MAX_ERROR_TYPE]}: {msg}"
     return out
 
 
@@ -111,11 +111,14 @@ def _request(
     client: httpx.Client | None = None,
 ) -> dict[str, Any]:
     url = f"{base_url.rstrip('/')}/{path}"
-    logger.info(
-        "morpheus_mcp %s %s key=%s%s",
-        method, url, redact_key_id(api_key),
-        f" model={body.get('model')}" if body and body.get("model") else "",
-    )
+    if logger.isEnabledFor(logging.INFO):
+        from morpheus_mcp.fallback import clean_model_name  # local import: fallback imports this module
+        model = clean_model_name(body.get("model")) if body else None
+        logger.info(
+            "morpheus_mcp %s %s key=%s%s",
+            method, strip_control(url), redact_key_id(api_key),
+            f' model="{model}"' if model else "",
+        )
     secs = clamp_timeout(timeout)
     t = httpx.Timeout(secs, connect=min(10.0, secs))
     texts = request_texts(body)

@@ -1,4 +1,4 @@
-# Design notes (v0.2.0)
+# Design notes (v0.2.1)
 
 ## Shape
 
@@ -55,3 +55,5 @@ alert; with no model passed and an empty hierarchy nothing is called and the res
 result has `status: "host_fallback"` and tells the agent to use its own model. The handoff text is
 fixed by the server and never includes model output. Alerts carry a parsed, length-capped error
 message, never the raw response body; the configured key and the request text are always removed.
+
+Since 0.2.1, `model_used` is the model named in the response and `requested_model` is the model asked for. If they differ by more than an alias, the endpoint chose a different model: the result stays `ok` and adds an informational `model_substituted` entry (`severity: info`) to `alerts` and `user_alert`.

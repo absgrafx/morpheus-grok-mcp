@@ -34,7 +34,7 @@ BANNED_PATTERNS = [
 ]
 SCANNED = [
     "README.md", "CHANGELOG.md", ".cursor-plugin/plugin.json", "mcp.json", "pyproject.toml",
-    "docs/*.md", "docs/listing/*", "skills/*/SKILL.md", "src/morpheus_mcp/*.py", "scripts/*.py",
+    "docs/*.md", "docs/listing/*", "skills/*/SKILL.md", "src/morpheus_mcp/*.py", "scripts/*.py", "tests/*.py",
 ]
 
 
@@ -73,7 +73,11 @@ def test_public_files_have_no_banned_terms():
     files = list(scanned_files())
     assert len(files) >= 15
     for f in files:
-        assert not find_banned(f.read_text()), f"{f.relative_to(ROOT)}: {find_banned(f.read_text())}"
+        hits = find_banned(f.read_text())
+        if f.resolve() == Path(__file__).resolve():
+            # This file holds the pattern list and its fixtures; check it for names only.
+            hits = [h for h in hits if h.startswith(("name sha256", "name prefix sha256"))]
+        assert not hits, f"{f.relative_to(ROOT)}: {hits}"
 
 
 def _h(word):
@@ -97,3 +101,15 @@ def test_absolute_path_check():
         assert find_banned(t), t
     for t in ("https://api.example.com/v1/chat", "/v1/models", "POST /chat/completions", "and/or", "a / b"):
         assert not find_banned(t), t
+
+
+def test_validator_requires_changelog_entry_for_version(tmp_path):
+    import shutil
+    dst = tmp_path / "repo"
+    shutil.copytree(ROOT, dst, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", "*.egg-info"))
+    cl = dst / "CHANGELOG.md"
+    text = cl.read_text()
+    version = re.search(r'"version":\s*"([^"]+)"', (dst / ".cursor-plugin/plugin.json").read_text()).group(1)
+    cl.write_text(re.sub(rf"^## {re.escape(version)}\b", "## 9.9.9", text, flags=re.M))
+    p = subprocess.run([sys.executable, str(dst / "scripts/validate_plugin.py")], capture_output=True, text=True)
+    assert p.returncode != 0 and f"no entry for {version}" in p.stdout + p.stderr

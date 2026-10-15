@@ -106,7 +106,12 @@ def main() -> int:
 
     # Every @v<x.y.z> install pin in the docs must match the version.
     for rel in ("mcp.json", "README.md", "CHANGELOG.md", "docs/listing/cursor-directory.md"):
-        for pin in re.findall(r"morpheus-grok-mcp(?:\.git)?@([^\s\"'`)]+)", (ROOT / rel).read_text()):
+        text = (ROOT / rel).read_text()
+        if rel == "CHANGELOG.md":
+            # Older entries keep their own pins; only the current version's entry is checked.
+            m = re.search(rf"^## {re.escape(version)}\b.*?(?=^## |\Z)", text, re.M | re.S)
+            text = m.group(0) if m else ""
+        for pin in re.findall(r"morpheus-grok-mcp(?:\.git)?@([^\s\"'`)]+)", text):
             if pin != f"v{version}":
                 errors.append(f"{rel}: install pin @{pin} != @v{version}")
 

@@ -118,6 +118,7 @@ def extract_chat(data: dict[str, Any]) -> dict[str, Any]:
         "finish_reason": choice.get("finish_reason"),
         "id": data.get("id"),
         "usage": data.get("usage"),
+        "served_model": data.get("model"),
     }
 
 
@@ -149,7 +150,7 @@ def do_embed(input, model, fallback_models=None, timeout_seconds=None, client=No
                           timeout=timeout_seconds, client=client)
         if not data.get("data"):
             raise EmptyResponse("no embeddings in the response")
-        return {"data": data.get("data"), "usage": data.get("usage")}
+        return {"data": data.get("data"), "usage": data.get("usage"), "served_model": data.get("model")}
 
     return run_with_fallback(endpoint=endpoint, models=_order(model, fallback_models or []), call=call)
 

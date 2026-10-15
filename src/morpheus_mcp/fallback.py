@@ -15,10 +15,12 @@ from __future__ import annotations
 
 import datetime as _dt
 import logging
+import re
 from dataclasses import asdict, dataclass
 from typing import Any, Callable
 
 from morpheus_mcp.http_client import MorpheusHTTPError
+from morpheus_mcp.redact import redact
 
 logger = logging.getLogger("morpheus_mcp")
 
@@ -29,6 +31,10 @@ HOST_FALLBACK_INSTRUCTIONS = (
 SHOW_ALERT_INSTRUCTIONS = (
     "Morpheus answered, but only after a fallback. Show the user the text in user_alert "
     "along with the answer."
+)
+SUBSTITUTION_INSTRUCTIONS = (
+    "Morpheus answered with a different model than the one requested. Show the user the text "
+    "in user_alert along with the answer."
 )
 AUTH_CODES = (401, 403)
 
@@ -53,6 +59,45 @@ class Alert:
             f"Morpheus alert at {self.time}: model {self.model or '(none)'} on {self.endpoint} "
             f"failed ({code}; {self.error}). Action: {self.action}"
         )
+
+
+@dataclass
+class SubstitutionAlert:
+    """The endpoint answered with a different model than the one requested."""
+    requested: str
+    served: str
+    endpoint: str
+    time: str
+    type: str = "model_substituted"
+
+    def text(self) -> str:
+        return (
+            f"Morpheus alert at {self.time}: requested model {self.requested} on {self.endpoint} "
+            f"was served by {self.served}. The answer is from {self.served}."
+        )
+
+
+_SEP_RE = re.compile(r"[\s_\-]+")
+
+
+def _norm(name: str) -> str:
+    return _SEP_RE.sub("-", name.strip().lower()).strip("-")
+
+
+def same_model(requested: str, served: str) -> bool:
+    """True for an exact, case-insensitive or obvious alias match.
+
+    Aliases: whitespace, '-' / ' ' / '_' treated alike, and a provider prefix
+    ('org/name') on either side when the part after the last '/' matches, or a
+    dash-separated prefix on either side when the shorter name has at least three
+    parts (an Uplink serves BGE-EN-ICL as text-embedding-bge-en-icl).
+    """
+    a, b = _norm(requested), _norm(served)
+    a, b = a.rsplit("/", 1)[-1], b.rsplit("/", 1)[-1]
+    if a == b:
+        return True
+    short, long_ = sorted((a, b), key=len)
+    return short.count("-") >= 2 and long_.endswith("-" + short)
 
 
 class EmptyResponse(Exception):
@@ -81,9 +126,9 @@ def run_with_fallback(
     clock: Callable[[], str] = now_iso,
 ) -> dict[str, Any]:
     """Try ``call(model)`` for each model in order. Returns a JSON-able dict."""
-    alerts: list[Alert] = []
+    alerts: list[Alert | SubstitutionAlert] = []
 
-    def alert(a: Alert) -> None:
+    def alert(a: Alert | SubstitutionAlert) -> None:
         alerts.append(a)
         logger.warning("%s", a.text())
         if on_alert:
@@ -111,11 +156,18 @@ def run_with_fallback(
                 action = "No Morpheus model left; returned control to the host model."
             alert(Alert(model, endpoint, err, code, clock(), action))
             continue
-        out: dict[str, Any] = {"status": "ok", "model_used": model, "endpoint": endpoint, **data}
+        data = dict(data)
+        served = data.pop("served_model", None)
+        served = redact(served.strip())[:200] if isinstance(served, str) and served.strip() else None
+        out: dict[str, Any] = {"status": "ok", "model_used": served or model,
+                               "requested_model": model, "endpoint": endpoint, **data}
+        if served and not same_model(model, served):
+            alert(SubstitutionAlert(redact(model), served, endpoint, clock()))
         if alerts:
             out["alerts"] = [asdict(a) for a in alerts]
             out["user_alert"] = "\n".join(a.text() for a in alerts)
-            out["agent_instructions"] = SHOW_ALERT_INSTRUCTIONS
+            only_sub = all(isinstance(a, SubstitutionAlert) for a in alerts)
+            out["agent_instructions"] = SUBSTITUTION_INSTRUCTIONS if only_sub else SHOW_ALERT_INSTRUCTIONS
         return out
     return handoff(alerts)
 

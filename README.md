@@ -8,7 +8,7 @@ Send chat and embedding requests to Morpheus, a decentralized AI inference netwo
 
 - Plugin name: `morpheus-inference` (Cursor Plugin, manifest in `.cursor-plugin/plugin.json`)
 - Repository: `absgrafx/morpheus-grok-mcp`
-- Version: 0.2.0 (see [CHANGELOG.md](CHANGELOG.md))
+- Version: 0.2.1 (see [CHANGELOG.md](CHANGELOG.md))
 - Author: ABSGrafx, devs@absgrafx.com
 - License: MIT
 
@@ -44,11 +44,11 @@ Keep the key out of chat, prompts, and files in your repo.
 
 The listing is not live yet. Cursor's [plugin documentation](https://cursor.com/docs/plugins#installing-plugins) describes the install steps: open **Customize** in the sidebar, find the plugin, and select **Install**. Then set the values described in [Configuration](#configuration).
 
-`mcp.json` starts the server with `uvx`, pinned to the `v0.2.0` tag of this repository:
+`mcp.json` starts the server with `uvx`, pinned to the `v0.2.1` tag of this repository:
 
 ```json
 "command": "uvx",
-"args": ["--from", "git+https://github.com/absgrafx/morpheus-grok-mcp@v0.2.0", "morpheus-mcp"]
+"args": ["--from", "git+https://github.com/absgrafx/morpheus-grok-mcp@v0.2.1", "morpheus-mcp"]
 ```
 
 You need [uv](https://docs.astral.sh/uv/) installed for `uvx`. See [Supply chain](#supply-chain) for what the pin covers.
@@ -123,22 +123,22 @@ Example: with `MORPHEUS_MODELS` set to `model-a,model-b`, suppose `model-a` retu
 2. Set `MORPHEUS_MODELS`. Without it, a chat call that names no model goes straight to `host_fallback`. `morpheus_embed` does not read `MORPHEUS_MODELS`, so it always needs an explicit `model` argument.
 3. Use these test models:
    - Chat: `deepseek-v4-flash`, a warm hosted model. It is a reasoning model, so a reply can take up to about 60 seconds.
-   - Embeddings: `BGE-EN-ICL`.
+   - Embeddings: `BGE-EN-ICL` works through an Uplink. Hosted api.mor.org embedding models may be cold, so an embedding call there can fail until one is warm.
 
-Cheaper hosted models (for example `Aion 3.5 Mini`) may return HTTP 503 `model_unavailable` when they are not warm. Try another warm model or use an Uplink.
+Use warm models for testing. Cheaper hosted models (for example `Aion 3.5 Mini`) may return HTTP 503 `model_unavailable` when they are not warm. Try another warm model or use an Uplink.
 
 With `MORPHEUS_MODELS=deepseek-v4-flash`, try these prompts:
 
 | Prompt | Expected result |
 |--------|-----------------|
 | "List the Morpheus models" | `morpheus_list_models` returns `"status": "ok"` and the model list. |
-| "Use morpheus_chat: reply with the word pong" | `"status": "ok"`, `model_used` is `deepseek-v4-flash`, and the content is `pong`. |
-| "Embed 'hello world' with morpheus_embed using BGE-EN-ICL" | `"status": "ok"` and a vector with 4096 dimensions. |
+| "Use morpheus_chat: reply with the word pong" | `"status": "ok"`, `model_used` and `requested_model` are `deepseek-v4-flash`, and the content is `pong`. |
+| "Embed 'hello world' with morpheus_embed using BGE-EN-ICL" | `"status": "ok"` and a vector with 4096 dimensions. Through an Uplink, `model_used` is `text-embedding-bge-en-icl`. |
 
 Fallback checks:
 
-- `MORPHEUS_MODELS=nonexistent-model-xyz,deepseek-v4-flash`: chat returns an alert for `nonexistent-model-xyz` (HTTP 404, not found in catalog), then succeeds with `deepseek-v4-flash`.
-- `MORPHEUS_MODELS=bad-a,bad-b`: chat returns an alert for each model, then `"status": "host_fallback"`, and your agent's own model answers.
+- `MORPHEUS_MODELS=BGE-EN-ICL,deepseek-v4-flash`: chat returns an alert for `BGE-EN-ICL` (an embedding model can't be used for chat), then `pong` from `deepseek-v4-flash`.
+- `MORPHEUS_MODELS=BGE-EN-ICL,Aion 3.5 Mini`: chat returns an alert for `BGE-EN-ICL`, and usually one for `Aion 3.5 Mini` when it is not warm, then `"status": "host_fallback"`, and your agent's own model answers.
 
 ## Alerts
 
@@ -167,6 +167,19 @@ Example `user_alert`:
 Morpheus alert at 2026-10-14T16:43:57-04:00: model no-such-model-xyz on https://uplink.example.com/v1/chat/completions failed (HTTP 404; invalid_request_error: model "no-such-model-xyz" not found in catalog). Action: Tried the next Morpheus model, deepseek-v4-flash.
 ```
 
+### Model substitution
+
+An endpoint can answer with a different model than the one requested. For example, api.mor.org may serve an unknown model name with another model. The plugin therefore reports two fields on every successful chat or embedding result:
+
+- `model_used`: the model named in the response's `model` field. If the response has no `model` field, this is the requested model.
+- `requested_model`: the model the plugin asked for.
+
+If they differ by more than letter case, spaces, `-` versus `_` or a space, a provider prefix (`org/name` where `name` matches), or a dash-separated prefix on a name of three or more parts (an Uplink serves `BGE-EN-ICL` as `text-embedding-bge-en-icl`), the result keeps `"status": "ok"` and adds an alert with `type` `model_substituted` and the fields `requested`, `served`, `endpoint` and `time`. The alert text is added to `user_alert`, and the served name is masked like other alert text. Example:
+
+```text
+Morpheus alert at 2026-10-15T10:25:16-04:00: requested model nonexistent-model-xyz on https://api.mor.org/api/v1/chat/completions was served by google-gemma-4-31b-it. The answer is from google-gemma-4-31b-it.
+```
+
 ## Privacy
 
 - Your messages and embedding inputs go to the endpoint you choose: api.mor.org, or your own Uplink. That endpoint passes them to a Morpheus compute provider to run the model. Check the terms of the endpoint you use for how it handles data.
@@ -179,7 +192,7 @@ Morpheus alert at 2026-10-14T16:43:57-04:00: model no-such-model-xyz on https://
 
 ## Supply chain
 
-- The install is pinned to the `v0.2.0` tag. A Git tag can be moved, so a commit-hash pin would be stronger. It can't be used here because the release commit only exists after the merge, so the tag is the pin for 0.2.0.
+- The install is pinned to the `v0.2.1` tag. A Git tag can be moved, so a commit-hash pin would be stronger. It can't be used here because the release commit only exists after the merge, so the tag is the pin for 0.2.1.
 - `uvx --from git+...` does not read `uv.lock`, so `pyproject.toml` pins the two direct dependencies exactly (`mcp==1.30.0`, `httpx==0.28.1`). Their own dependencies are resolved at install time.
 - The CI workflow pins its GitHub Actions to commit hashes and has read-only repository access.
 

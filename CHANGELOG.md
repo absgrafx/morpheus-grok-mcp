@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.1 (unreleased; tag `v0.2.1` is created after merge)
+
+### Fixed
+- `model_used` now reports the model named in the response's `model` field for chat and embeddings, falling back to the requested name only when the field is absent. Before, it always showed the requested name, even when the endpoint served another model (for example, api.mor.org served `nonexistent-model-xyz` with `google-gemma-4-31b-it`).
+
+### Added
+- `requested_model` on every successful chat and embedding result.
+- A `model_substituted` alert (`requested`, `served`, `endpoint`, `time`) when the served model differs from the requested one by more than letter case, separators, a provider prefix or a dash-separated prefix (for example `text-embedding-bge-en-icl` for `BGE-EN-ICL`). It is added to `user_alert`, and the status stays `ok`.
+
+### Changed
+- README Testing: recommends warm models, notes that `BGE-EN-ICL` embeddings work through an Uplink and hosted embedding models may be cold, and replaces the fallback checks with `BGE-EN-ICL,deepseek-v4-flash` and `BGE-EN-ICL,Aion 3.5 Mini`.
+- The install pin moves to `@v0.2.1`.
+
 ## 0.2.0 (unreleased; tag `v0.2.0` is created after merge)
 
 ### Changed

@@ -118,10 +118,9 @@ def _norm(name: str) -> str:
 def same_model(requested: str, served: str) -> bool:
     """True when the served name is the requested model.
 
-    A match is: equal after lowercasing and treating ' ', '_' and '-' alike; or the
-    served name is 'org/<name>' and the request had no org, or both name the same
-    org, with the names equal; or a pair in MODEL_ALIASES. Anything else is a
-    substitution.
+    A match is: equal after lowercasing and treating ' ', '_' and '-' alike (so
+    both have the same org, or neither has one); or a pair in MODEL_ALIASES.
+    Anything else is a substitution.
     """
     if INVALID_MODEL_NAME in (requested, served):
         return False
@@ -130,7 +129,7 @@ def same_model(requested: str, served: str) -> bool:
         return True
     a_org, _, a_name = a.rpartition("/")
     b_org, _, b_name = b.rpartition("/")
-    if a_name == b_name and (not a_org or a_org == b_org):
+    if a_name == b_name and a_org == b_org:
         return True
     return b in MODEL_ALIASES.get(a, set())
 
@@ -200,6 +199,10 @@ def run_with_fallback(
         data = dict(data)
         requested = clean_model_name(model, request_texts) or model
         served = clean_model_name(data.pop("served_model", None), request_texts)
+        if served and " " in served and not same_model(requested, served):
+            # A served name may contain spaces only when it names the requested model
+            # (or an alias); otherwise a sentence could reach the agent as a model name.
+            served = INVALID_MODEL_NAME
         out: dict[str, Any] = {"status": "ok", "model_used": served or requested,
                                "requested_model": requested, "endpoint": endpoint, **data}
         if served and not same_model(requested, served):

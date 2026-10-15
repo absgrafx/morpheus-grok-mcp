@@ -117,6 +117,29 @@ If the agent passes no `model` and `MORPHEUS_MODELS` is empty, nothing is sent t
 
 Example: with `MORPHEUS_MODELS` set to `model-a,model-b`, suppose `model-a` returns HTTP 502. The plugin records an alert for `model-a`, calls `model-b`, and returns the answer from `model-b` together with that alert. If `model-b` also fails, a second alert is added and the tool returns `host_fallback`, so your agent's own model takes over.
 
+## Testing
+
+1. Get a key. Mint your own at [app.mor.org](https://app.mor.org), which includes $1 of free inference, or use an Uplink Prompt key (not the Master key).
+2. Set `MORPHEUS_MODELS`. Without it, a chat call that names no model goes straight to `host_fallback`. `morpheus_embed` does not read `MORPHEUS_MODELS`, so it always needs an explicit `model` argument.
+3. Use these test models:
+   - Chat: `deepseek-v4-flash`, a warm hosted model. It is a reasoning model, so a reply can take up to about 60 seconds.
+   - Embeddings: `BGE-EN-ICL`.
+
+Cheaper hosted models (for example `Aion 3.5 Mini`) may return HTTP 503 `model_unavailable` when they are not warm. Try another warm model or use an Uplink.
+
+With `MORPHEUS_MODELS=deepseek-v4-flash`, try these prompts:
+
+| Prompt | Expected result |
+|--------|-----------------|
+| "List the Morpheus models" | `morpheus_list_models` returns `"status": "ok"` and the model list. |
+| "Use morpheus_chat: reply with the word pong" | `"status": "ok"`, `model_used` is `deepseek-v4-flash`, and the content is `pong`. |
+| "Embed 'hello world' with morpheus_embed using BGE-EN-ICL" | `"status": "ok"` and a vector with 4096 dimensions. |
+
+Fallback checks:
+
+- `MORPHEUS_MODELS=nonexistent-model-xyz,deepseek-v4-flash`: chat returns an alert for `nonexistent-model-xyz` (HTTP 404, not found in catalog), then succeeds with `deepseek-v4-flash`.
+- `MORPHEUS_MODELS=bad-a,bad-b`: chat returns an alert for each model, then `"status": "host_fallback"`, and your agent's own model answers.
+
 ## Alerts
 
 Every failure produces an alert. Each alert has:

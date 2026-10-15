@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/absgrafx/morpheus-grok-mcp/schemas/cursor-plugin.schema.json",
+  "title": "Cursor Plugin manifest (.cursor-plugin/plugin.json)",
+  "description": "Written from the field table at https://cursor.com/docs/reference/plugins (Cursor publishes no official JSON Schema). Strict on purpose: unknown fields fail.",
+  "type": "object",
+  "properties": {
+    "name": {"type": "string", "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"},
+    "description": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$"},
+    "author": {
+      "type": "object",
+      "properties": {"name": {"type": "string", "minLength": 1}, "email": {"type": "string"}},
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "homepage": {"type": "string", "pattern": "^https?://"},
+    "repository": {"type": "string", "pattern": "^https?://"},
+    "license": {"type": "string"},
+    "keywords": {"type": "array", "items": {"type": "string"}},
+    "logo": {"type": "string", "minLength": 1},
+    "rules": {"type": ["string", "array"]},
+    "agents": {"type": ["string", "array"]},
+    "skills": {"type": ["string", "array"]},
+    "commands": {"type": ["string", "array"]},
+    "hooks": {"type": ["string", "object"]},
+    "mcpServers": {"type": ["string", "object", "array"]},
+    "variables": {
+      "type": "object",
+      "properties": {
+        "type": {"const": "object"},
+        "properties": {"type": "object"},
+        "required": {"type": "array", "items": {"type": "string"}}
+      },
+      "required": ["type", "properties"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["name"],
+  "additionalProperties": false
+}

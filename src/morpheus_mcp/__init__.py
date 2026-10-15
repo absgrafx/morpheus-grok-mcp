@@ -1,4 +1,4 @@
-"""Morpheus Inference MCP — OpenAI-compatible transport to api.mor.org or private Uplink."""
+"""Morpheus Inference MCP server: chat and embedding requests to Morpheus, a decentralized AI inference network."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 

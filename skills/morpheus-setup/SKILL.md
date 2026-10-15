@@ -1,68 +1,28 @@
 ---
 name: morpheus-setup
 description: >-
-  Install and configure the Morpheus Inference Marketplace MCP — endpoint
-  public vs custom Uplink, key shared vs per_bot, smoke list_models then chat.
-  Secrets only via Plugins → Configure / vault inject; never chat.
+  Help the user configure the Morpheus Inference plugin: API key, mode
+  (api.mor.org or Uplink), base URL and model hierarchy, then check it works.
+  Use when the user asks to set up or troubleshoot Morpheus.
 ---
 
 # Morpheus setup
 
-Configure the **morpheus-inference** Marketplace MCP so Grok Bot can call Morpheus MoE.
+The plugin has three settings and one optional list. The user sets them in Cursor under **Plugins > Morpheus Inference > Configure**. Never ask the user to paste a key into chat.
 
-Operator / maintainer handle in public docs: **NomadicRogue**. Crew roles that may assist installs: CoS (vault inject), CIO, COO.
+| Setting | Variable | Notes |
+|---------|----------|-------|
+| API key | `MORPHEUS_API_KEY` | A key from app.mor.org, or a Prompt or ephemeral key from the user's own Uplink (not the Master key). |
+| Mode | `MORPHEUS_MODE` | `api.mor.org` (default) or `uplink`. |
+| Base URL | `MORPHEUS_BASE_URL` | Uplink mode only, for example `https://uplink.example.com/v1`. Must be `https://` (`http://` only for localhost, 127.0.0.1 or ::1) with no user name or password in it. Ignored in api.mor.org mode, which always uses `https://api.mor.org/api/v1`. |
+| Model hierarchy (optional) | `MORPHEUS_MODELS` | Chat models to try, comma-separated, most preferred first. |
 
-## 1. Endpoint mode
+## Check it works
 
-| Mode | Env | Base |
-|------|-----|------|
-| **public** (default) | `MORPHEUS_ENDPOINT_MODE=public` | Forced to `https://api.mor.org/api/v1` |
-| **custom** | `MORPHEUS_ENDPOINT_MODE=custom` + `MORPHEUS_BASE_URL` | Your Uplink `https://<host>/v1` |
+1. Call `morpheus_list_models`. Expect `status: "ok"` and a list of model ids. If you get an alert, show it to the user: an HTTP 401 or 403 means the key was rejected; a 404 usually means the base URL is wrong.
+2. If the hierarchy is empty, suggest the user pick ids from that list and set **Model hierarchy**.
+3. Call `morpheus_chat` with a short message, for example `[{"role": "user", "content": "Reply with one word: pong"}]`, and show the user the result.
 
-Custom bases are **auto-normalized** to end in `/v1` (warn on stderr, not hard-fail). Do **not** paste `/chat/completions` into the base. Private Uplink uses **`/v1`** (no `/api`). Public APIGW uses **`/api/v1`**.
+## Uplink base URL
 
-## 2. Key mode
-
-| Mode | Env | Behavior |
-|------|-----|----------|
-| **shared** (default) | `MORPHEUS_KEY_MODE=shared` + `MORPHEUS_API_KEY` | One Bearer key for all calls |
-| **per_bot** | `MORPHEUS_KEY_MODE=per_bot` | Resolve key for `MORPHEUS_AGENT_SLOT` / `MORPHEUS_AGENT` |
-
-Per-bot resolution order:
-
-1. Discrete slot secret `MORPHEUS_API_KEY_<SLOT>` (SLOT upper role keys: `COS`, `CTO`, `CISO`, `CIO`, `COO`, `CMO`, `CFO`)
-2. JSON map escape `MORPHEUS_API_KEYS_JSON` (`{"cos":"sk-…", …}` — arbitrary slot keys allowed)
-
-**Hard-fail** if per_bot and the slot key is missing — no silent fallback to shared.
-
-**Never** use a master / usage-only key for chat, embeddings, or list_models. If slot is `master` or `MORPHEUS_UPLINK_KEY_ROLE=master_usage_only`, the connector refuses.
-
-## 3. Secrets UX
-
-- Set secrets only via **Plugins → Configure**, InstallPlugin secure fields, or vault inject (CoS lane).
-- **Never** paste `sk-…` into chat, README, memories, or commit them.
-- `mcp.json` uses `${MORPHEUS_*}` placeholders only.
-
-## 4. Default model + policy toggles
-
-- `MORPHEUS_MODEL_DEFAULT` — exact id from `GET /models` (not a display name).
-- `MORPHEUS_POLICY_MOE_DEFAULT` — prefer `morpheus_chat` for analysis (`true` default).
-- `MORPHEUS_POLICY_CURSOR_EXCEPTION` — native/Cursor only when operator names an exception.
-- `MORPHEUS_POLICY_FALLBACK_ON_DOWN` — if Morpheus is down, native fallback allowed **and** must surface `Morpheus didn’t work: <reason>`.
-
-## 5. Smoke test
-
-1. Call **`morpheus_list_models`** — expect a catalog (or a clear auth error).
-2. Call **`morpheus_chat`** with a one-word ping and an exact model id.
-3. On failure, do not invent bases; re-check public vs `/api/v1` vs custom `/v1`.
-
-## 6. Local run (dev)
-
-```bash
-uv sync
-uv run morpheus-mcp
-# or: python -m morpheus_mcp
-```
-
-Marketplace install prefers `uvx --from git+https://github.com/absgrafx/morpheus-grok-mcp.git morpheus-mcp` per `mcp.json`.
-
+Use the base that ends in `/v1`. The plugin removes a pasted `/chat/completions` and adds a missing `/v1`, and says so in its log. It never adds `/api` for an Uplink.

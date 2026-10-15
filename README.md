@@ -1,117 +1,175 @@
-# morpheus-grok-mcp
+# Morpheus Inference for Cursor
 
 <p align="center">
-  <img src="assets/logo.png" alt="Morpheus Inference — Uplink telephone" width="256" height="256" />
+  <img src="assets/logo.png" alt="Morpheus Inference logo" width="128" height="128" />
 </p>
 
-Grok / Cursor **Marketplace MCP** that routes OpenAI-compatible inference to Morpheus:
+Send chat and embedding requests to Morpheus, a decentralized AI inference network, through api.mor.org or your own Uplink.
 
-- **Public (default):** `https://api.mor.org/api/v1`
-- **Custom:** your Uplink base `https://<host>/v1` (auto-normalized; never invent `/api` on Uplink)
+- Plugin name: `morpheus-inference` (Cursor Plugin, manifest in `.cursor-plugin/plugin.json`)
+- Repository: `absgrafx/morpheus-grok-mcp`
+- Version: 0.2.0 (see [CHANGELOG.md](CHANGELOG.md))
+- Author: ABSGrafx, devs@absgrafx.com
+- License: MIT
 
-**Name:** Morpheus Inference (`morpheus-inference`)  
-**Maintainer (public):** **NomadicRogue** / ABSGrafx  
-**License:** MIT — see `LICENSE`  
-**Status:** **v0 implementation** (this PR) — stdio MCP + setup/policy skills
+## What it does
 
-**GitHub:** `absgrafx/morpheus-grok-mcp` · **Python package / CLI:** `morpheus-mcp` (`python -m morpheus_mcp`)
+The plugin adds an MCP (Model Context Protocol) server, which gives your agent three tools, plus two skills.
 
-Accepted product design lives **in this repo** under [`docs/`](./docs/) (not a private eng tree).
+| Tool | What it calls |
+|------|---------------|
+| `morpheus_chat` | `POST {base}/chat/completions` |
+| `morpheus_embed` | `POST {base}/embeddings` |
+| `morpheus_list_models` | `GET {base}/models` |
+
+| Skill | Purpose |
+|-------|---------|
+| `use-morpheus-model` | Tells the agent to use Morpheus only when you ask for it or have said you want it, and how to handle fallbacks and alerts. |
+| `morpheus-setup` | Walks through configuration and a first test. |
+
+Using Morpheus is opt-in. The plugin does not replace your agent's own model.
+
+## Get a key
+
+You need one API key. Pick where it comes from:
+
+- **api.mor.org:** sign in at [app.mor.org](https://app.mor.org) and create an API key. The plugin then uses `https://api.mor.org/api/v1`.
+- **Your own Uplink:** if you run a [Morpheus Uplink](https://github.com/MorpheusAIs/Morpheus-Uplink), use a key from the Uplink web interface. The Uplink documentation ([API keys](https://github.com/MorpheusAIs/Morpheus-Uplink/blob/main/docs/03-gui.md#api-keys)) lists three kinds: Master (inference and admin), Prompt (inference only) and ephemeral (named keys for apps and agents). Use a Prompt key or an ephemeral key, not the Master key. The base URL (web address) is your Uplink host followed by `/v1`, for example `https://uplink.example.com/v1`.
+
+Keep the key out of chat, prompts, and files in your repo.
 
 ## Install
 
-### Marketplace / uvx (preferred)
+### From the Cursor Marketplace
 
-`mcp.json` runs:
+The listing is not live yet. Cursor's [plugin documentation](https://cursor.com/docs/plugins#installing-plugins) describes the install steps: open **Customize** in the sidebar, find the plugin, and select **Install**. Then set the values described in [Configuration](#configuration).
 
-```bash
-uvx --from git+https://github.com/absgrafx/morpheus-grok-mcp.git morpheus-mcp
+`mcp.json` starts the server with `uvx`, pinned to the `v0.2.0` tag of this repository:
+
+```json
+"command": "uvx",
+"args": ["--from", "git+https://github.com/absgrafx/morpheus-grok-mcp@v0.2.0", "morpheus-mcp"]
 ```
 
-Configure secrets via **Plugins → Configure** (or vault inject). Values are never committed.
+You need [uv](https://docs.astral.sh/uv/) installed for `uvx`. See [Supply chain](#supply-chain) for what the pin covers.
 
-### Local development
+### From a clone (local testing)
 
 ```bash
 git clone https://github.com/absgrafx/morpheus-grok-mcp.git
-cd morpheus-mcp
-uv sync --all-extras
-uv run morpheus-mcp
-# or: uv run python -m morpheus_mcp
+cd morpheus-grok-mcp
+uv sync --extra dev
+uv run python scripts/validate_plugin.py
+uv run pytest -q
+uv run python scripts/smoke_mcp.py
 ```
 
-## Configure (variable names only)
+The last command starts the MCP server from your clone and prints its tools:
 
-| Variable | Meaning |
-|----------|---------|
-| `MORPHEUS_ENDPOINT_MODE` | `public` \| `custom` (default `public`) |
-| `MORPHEUS_BASE_URL` | Custom Uplink URL when `custom` → normalized to `…/v1` |
-| `MORPHEUS_KEY_MODE` | `shared` \| `per_bot` (default `shared`) |
-| `MORPHEUS_API_KEY` | Shared Bearer key |
-| `MORPHEUS_API_KEY_<SLOT>` | Discrete per-bot secrets (`COS`, `CTO`, `CISO`, `CIO`, `COO`, `CMO`, `CFO`) |
-| `MORPHEUS_API_KEYS_JSON` | JSON map escape hatch slot → key |
-| `MORPHEUS_AGENT_SLOT` / `MORPHEUS_AGENT` | Slot id when `per_bot` |
-| `MORPHEUS_MODEL_DEFAULT` | Exact model id when `morpheus_chat` omits `model` |
-| `MORPHEUS_POLICY_MOE_DEFAULT` | Prefer MoE via `morpheus_chat` |
-| `MORPHEUS_POLICY_CURSOR_EXCEPTION` | Native only if operator names exception |
-| `MORPHEUS_POLICY_FALLBACK_ON_DOWN` | On down → native + `Morpheus didn’t work: <reason>` |
+```text
+tools: morpheus_chat, morpheus_embed, morpheus_list_models
+```
 
-Slot ids are lowercase role keys (`cos`, `cto`, `ciso`, `cio`, `coo`, `cmo`, `cfo`) matching those roles. The JSON-map escape accepts arbitrary slot keys when needed. Master / usage-only keys are **refused** for chat, embeddings, and list_models.
-
-See `plugin.json` for titles/descriptions and `skills/morpheus-setup/SKILL.md` for the guided setup.
-
-## Tools (v0)
-
-| Tool | Upstream |
-|------|----------|
-| `morpheus_chat` | `POST {base}/chat/completions` |
-| `morpheus_list_models` | `GET {base}/models` |
-| `morpheus_embed` | `POST {base}/embeddings` |
-
-**Not shipped:** `morpheus_usage` (deferred).
-
-## Skills
-
-- `skills/morpheus-setup` — endpoint/key modes, smoke test, secrets UX
-- `skills/use-morpheus-model` — MoE default policy; native only on named exception or down+flag
-
-## Public vs custom bases
-
-| Mode | Base |
-|------|------|
-| public | `https://api.mor.org/api/v1` (forced) |
-| custom | Your host normalized to `https://<host>/v1` |
-
-Wrong prefix (`/api/v1` on Uplink, or bare `/v1` on APIGW) → 404. The connector warns on custom normalize; it does not invent `/api` for Uplink.
-
-## Non-goals (v0)
-
-- Not shipping any staff CLI / bridge to Marketplace users
-- Not embedding Uplink / Lumerin / C-Node
-- Not re-shipping staff allowlist tools as MCP tools
-- No secrets in this repo (plugin variables / secure install UI only)
-- No master key for inference
-- Not claiming APIGW and Uplink share identical billing/`/usage` semantics
-
-## Dogfood note
-
-Crews can sideload this listing with `endpoint_mode=custom` + per-bot slot secrets to exercise the same MoE path the staff bridge used historically. Host-native tools stay for repo/gh work. Full bridge retirement needs the dogfood checklist in [`docs/DESIGN.md`](./docs/DESIGN.md) (including a possible host custom-provider hook as P1 — not a v0 publish blocker).
-
-## Design
-
-See [`docs/DESIGN.md`](./docs/DESIGN.md) — Conceptual / Logical / Physical, Marketplace fields, and accepted Q1–Q5 locks.
-
-## Tests
+To load the plugin in Cursor from your machine, copy it into the local plugins folder:
 
 ```bash
-uv sync --all-extras
-uv run pytest
+mkdir -p ~/.cursor/plugins/local/morpheus-inference
+cp -r .cursor-plugin assets mcp.json skills README.md LICENSE ~/.cursor/plugins/local/morpheus-inference/
 ```
+
+Copy the files rather than linking them: Cursor's [local testing notes](https://cursor.com/docs/plugins#test-plugins-locally) say a symlink in this folder loads only if its target is inside the folder. Then restart Cursor (or run **Developer: Reload Window**) and check **Customize** for the MCP server and skills.
+
+## Configuration
+
+Three settings, plus an optional model list. Set them in the Cursor dashboard under **Plugins**, at install time or later with **Configure**. The plugin declares only the names; it never stores the values.
+
+| Setting | Variable | Required | Value |
+|---------|----------|----------|-------|
+| API key | `MORPHEUS_API_KEY` | yes | Your key from app.mor.org or your Uplink |
+| Mode | `MORPHEUS_MODE` | yes, default `api.mor.org` | `api.mor.org` or `uplink` |
+| Base URL | `MORPHEUS_BASE_URL` | Uplink mode only | For example `https://uplink.example.com/v1` |
+| Model hierarchy | `MORPHEUS_MODELS` | no | Chat models to try, comma-separated, most preferred first |
+
+In `api.mor.org` mode the base URL is always `https://api.mor.org/api/v1`, and `MORPHEUS_BASE_URL` is ignored.
+
+In `uplink` mode:
+
+- The base URL must start with `https://`. Plain `http://` is accepted only for `localhost`, `127.0.0.1` and `::1`.
+- A user name or password in the URL (`https://user:pass@host`) is rejected. Put the key in `MORPHEUS_API_KEY` instead.
+- The plugin makes the URL end in `/v1`: it removes a pasted `/chat/completions`, `/embeddings` or `/models`, collapses `/v1/v1`, and adds `/v1` if it is missing. It logs a warning for each change. It never adds `/api`.
+
+Model ids must match the endpoint's catalog exactly. Call `morpheus_list_models` to see them.
+
+Per-agent keys and the old policy flags from 0.1.0 were removed. See [docs/DESIGN.md](docs/DESIGN.md#removed-in-020) for how to get the same results.
+
+## Model hierarchy and fallback
+
+For `morpheus_chat`, the plugin tries models in this order: the `model` argument (if the agent passed one), then each id in `MORPHEUS_MODELS`. `MORPHEUS_MODELS` applies to chat only, because embedding models are different: for `morpheus_embed`, the plugin tries the `model` argument, then each id in the optional `fallback_models` argument.
+
+If the agent passes no `model` and `MORPHEUS_MODELS` is empty, nothing is sent to Morpheus. The tool returns `host_fallback` at once, with an alert saying no model was set.
+
+- Each model is called once. There are no silent retries.
+- Each call waits up to 60 seconds for a reply. The agent can set `timeout_seconds` on a call; values below 1 are raised to 1 and values above 300 are lowered to 300.
+- An HTTP (web request) error, a timeout, a network error, or an empty response moves on to the next model, and each failure is reported.
+- HTTP 401 or 403 means the key was rejected. Every model uses the same key, so the plugin stops there.
+- When no Morpheus model is left, the tool returns `"status": "host_fallback"` with `"use_host_model": true` and this instruction to the agent: "Morpheus could not complete this request. Use your own model to handle it now. First show the user the text in user_alert, then continue with your own model."
+- `morpheus_list_models` makes a single call. If it fails, it also returns `host_fallback`, with an alert, and tells the agent that Morpheus is not reachable right now.
+
+Example: with `MORPHEUS_MODELS` set to `model-a,model-b`, suppose `model-a` returns HTTP 502. The plugin records an alert for `model-a`, calls `model-b`, and returns the answer from `model-b` together with that alert. If `model-b` also fails, a second alert is added and the tool returns `host_fallback`, so your agent's own model takes over.
+
+## Alerts
+
+Every failure produces an alert. Each alert has:
+
+| Field | Meaning |
+|-------|---------|
+| `model` | The model that failed |
+| `endpoint` | The full URL that was called |
+| `http_status` | The HTTP status code, or `null` if there was no HTTP response |
+| `error` | A short description: a parsed error message (the status code is in `http_status`), or for example `timed out after 60s` |
+| `time` | Local time with UTC offset |
+| `action` | What was done instead |
+
+If the endpoint returns an HTTP error, the alert shows the status code and a short parsed error message (the error type up to 60 characters and the message up to 200 characters). The raw response body is never shown. If the body is not JSON or has no message, the alert says so instead. The configured key is always masked, and the request text is never included: a message that quotes the request is replaced by "(upstream message withheld: it quoted the request)".
+
+The alert reaches you and the agent in three ways:
+
+1. In the tool result: `alerts` (structured) and `user_alert` (one line per failure), with `agent_instructions` telling the agent to show `user_alert` to you.
+2. As an MCP log message (warning level) to Cursor.
+3. On the server's standard error output, at the moment the failure happens.
+
+Example `user_alert`:
+
+```text
+Morpheus alert at 2026-10-14T16:43:57-04:00: model no-such-model-xyz on https://uplink.example.com/v1/chat/completions failed (HTTP 404; invalid_request_error: model "no-such-model-xyz" not found in catalog). Action: Tried the next Morpheus model, deepseek-v4-flash.
+```
+
+## Privacy
+
+- Your messages and embedding inputs go to the endpoint you choose: api.mor.org, or your own Uplink. That endpoint passes them to a Morpheus compute provider to run the model. Check the terms of the endpoint you use for how it handles data.
+- When the plugin hands back to your agent's own model, the request is handled by that model in the usual way. The plugin does not send it anywhere else.
+- The plugin has no telemetry and stores nothing on disk.
+- Logs go to standard error only. By default only warnings (alerts and URL fixes) are logged. Starting the server with `morpheus-mcp --verbose` adds one line per request: method, URL, model id and the last four characters of the key. Message text is never logged.
+- Every log line, alert and error passes through redaction: the configured key is masked whatever its format, as are `sk-` keys, Bearer tokens and credentials in URLs.
+- Masking matches the key's exact text. A key that is split, base64-encoded, or URL-encoded with reserved characters is not masked. A key shorter than 4 characters is not masked.
+- The key is passed to the server as an environment variable by Cursor. It is not written to this repository, and CI uses no keys.
+
+## Supply chain
+
+- The install is pinned to the `v0.2.0` tag. A Git tag can be moved, so a commit-hash pin would be stronger. It can't be used here because the release commit only exists after the merge, so the tag is the pin for 0.2.0.
+- `uvx --from git+...` does not read `uv.lock`, so `pyproject.toml` pins the two direct dependencies exactly (`mcp==1.30.0`, `httpx==0.28.1`). Their own dependencies are resolved at install time.
+- The CI workflow pins its GitHub Actions to commit hashes and has read-only repository access.
+
+## Support
+
+Email devs@absgrafx.com or open an issue on this repository.
+
+## Development
+
+Continuous integration (CI) on GitHub Actions (Linux) runs `uv sync --extra dev --frozen`, `uv run python scripts/validate_plugin.py` and `uv run pytest -q` on every pull request and on pushes to `main`. The validator checks the manifest and `mcp.json` with `jsonschema`, checks that every `${VAR}` in `mcp.json` is declared, checks that the install is pinned to `v<version>`, and checks that the contact email matches the manifest everywhere. Tests use mocked HTTP and need no key.
+
+To change the contact email, edit `author.email` in `.cursor-plugin/plugin.json` and replace the old address in `pyproject.toml`, this README and `docs/listing/cursor-directory.md`. The validator fails until they match.
 
 ## License
 
-MIT — Copyright (c) 2026 ABSGrafx LLC.
-
-## CI
-
-Pull requests and pushes to `main` run unit tests via GitHub Actions (`uv sync --extra dev` then `uv run pytest`). No live API calls and no secrets in CI.
+MIT. Copyright (c) 2026 ABSGrafx LLC. See [LICENSE](LICENSE).

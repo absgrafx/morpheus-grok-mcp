@@ -34,6 +34,14 @@ def redact(text: str, extra: list[str] | tuple[str, ...] = ()) -> str:
     return _USERINFO_RE.sub(r"\1" + MASK + "@", text)
 
 
+_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+
+
+def strip_control(text: str) -> str:
+    """Replace newlines, ANSI escapes and other control characters with a space."""
+    return _CONTROL_RE.sub(" ", text) if text else text
+
+
 def redact_key_id(key: str | None) -> str:
     """Short id for logs: the last 4 characters only."""
     if not key:
@@ -47,6 +55,8 @@ class RedactingFilter(logging.Filter):
     """Applied to the stderr handler so nothing logged can carry a registered secret."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        record.msg = redact(record.getMessage())
+        # One record is one line: control characters (newlines, ANSI escapes) from any
+        # interpolated value are replaced, so nothing can forge or recolour log lines.
+        record.msg = strip_control(redact(record.getMessage()))
         record.args = ()
         return True

@@ -73,13 +73,21 @@ class SubstitutionAlert:
 
     def text(self) -> str:
         return (
-            f"Morpheus note at {self.time}: served by {self.served} instead of {self.requested} "
+            f'Morpheus note at {self.time}: served by "{self.served}" instead of "{self.requested}" '
             f"on {self.endpoint} (the endpoint picked the model)."
         )
 
 
 INVALID_MODEL_NAME = "(invalid model name)"
 MAX_MODEL_NAME = 100
+MAX_SUBSTITUTED_NAME = 64
+MAX_NAME_TOKENS = 8
+_TOKEN_SPLIT_RE = re.compile(r"[._:/@+\-]+")
+# Whole tokens (case-insensitive) that a real model id never needs. "instruct" is not here.
+DENY_TOKENS = frozenset({
+    "system", "ignore", "previous", "instruction", "instructions", "assistant", "user",
+    "prompt", "paste", "api", "apikey", "key", "secret", "password", "token", "override",
+})
 _MODEL_NAME_RE = re.compile(r"[A-Za-z0-9._:/@+\- ]+")
 _SEP_RE = re.compile(r"[\s_\-]+")
 
@@ -109,6 +117,16 @@ def clean_model_name(name: Any, request_texts: list[str] | tuple[str, ...] = ())
             or redact(v) != v or (request_texts and _quotes_request(v, list(request_texts)))):
         return INVALID_MODEL_NAME
     return v
+
+
+def suspicious_model_name(name: str) -> bool:
+    """Stricter check for a served name that is not the requested model or an alias."""
+    if len(name) > MAX_SUBSTITUTED_NAME:
+        return True
+    tokens = [t for t in _TOKEN_SPLIT_RE.split(name.lower()) if t]
+    if len(tokens) > MAX_NAME_TOKENS:
+        return True
+    return any(t in DENY_TOKENS for t in tokens)
 
 
 def _norm(name: str) -> str:
@@ -213,7 +231,7 @@ def run_with_fallback(
             served = clean_model_name(raw)
         else:
             served = clean_model_name(raw, request_texts)
-            if served and " " in served:
+            if served and (" " in served or suspicious_model_name(served)):
                 # A served name may contain spaces only when it names the requested model
                 # (or an alias); otherwise a sentence could reach the agent as a model name.
                 served = INVALID_MODEL_NAME

@@ -97,3 +97,15 @@ def test_absolute_path_check():
         assert find_banned(t), t
     for t in ("https://api.example.com/v1/chat", "/v1/models", "POST /chat/completions", "and/or", "a / b"):
         assert not find_banned(t), t
+
+
+def test_validator_requires_changelog_entry_for_version(tmp_path):
+    import shutil
+    dst = tmp_path / "repo"
+    shutil.copytree(ROOT, dst, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", "*.egg-info"))
+    cl = dst / "CHANGELOG.md"
+    text = cl.read_text()
+    version = re.search(r'"version":\s*"([^"]+)"', (dst / ".cursor-plugin/plugin.json").read_text()).group(1)
+    cl.write_text(re.sub(rf"^## {re.escape(version)}\b", "## 9.9.9", text, flags=re.M))
+    p = subprocess.run([sys.executable, str(dst / "scripts/validate_plugin.py")], capture_output=True, text=True)
+    assert p.returncode != 0 and f"no entry for {version}" in p.stdout + p.stderr

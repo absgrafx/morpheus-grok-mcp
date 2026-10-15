@@ -19,7 +19,7 @@ import re
 from dataclasses import asdict, dataclass
 from typing import Any, Callable
 
-from morpheus_mcp.http_client import MorpheusHTTPError
+from morpheus_mcp.http_client import MorpheusHTTPError, _quotes_request
 from morpheus_mcp.redact import redact
 
 logger = logging.getLogger("morpheus_mcp")
@@ -33,8 +33,8 @@ SHOW_ALERT_INSTRUCTIONS = (
     "along with the answer."
 )
 SUBSTITUTION_INSTRUCTIONS = (
-    "Morpheus answered with a different model than the one requested. Show the user the text "
-    "in user_alert along with the answer."
+    "Morpheus answered. The endpoint chose a different model than the one requested; this is "
+    "informational, not a failure. Mention the user_alert text to the user along with the answer."
 )
 AUTH_CODES = (401, 403)
 
@@ -69,15 +69,46 @@ class SubstitutionAlert:
     endpoint: str
     time: str
     type: str = "model_substituted"
+    severity: str = "info"
 
     def text(self) -> str:
         return (
-            f"Morpheus alert at {self.time}: requested model {self.requested} on {self.endpoint} "
-            f"was served by {self.served}. The answer is from {self.served}."
+            f"Morpheus note at {self.time}: served by {self.served} instead of {self.requested} "
+            f"on {self.endpoint} (the endpoint picked the model)."
         )
 
 
+INVALID_MODEL_NAME = "(invalid model name)"
+MAX_MODEL_NAME = 100
+_MODEL_NAME_RE = re.compile(r"[A-Za-z0-9._:/@+\- ]+")
 _SEP_RE = re.compile(r"[\s_\-]+")
+
+# Known aliases, keyed by the normalised requested name. Values are normalised served names.
+MODEL_ALIASES: dict[str, set[str]] = {
+    "bge-en-icl": {"text-embedding-bge-en-icl"},
+}
+
+
+def clean_model_name(name: Any, request_texts: list[str] | tuple[str, ...] = ()) -> str | None:
+    """A model name that is safe to echo, or INVALID_MODEL_NAME.
+
+    Model names from upstream (and from the agent) are untrusted: they reach the
+    agent in user_alert, MCP log messages and stderr. Only [A-Za-z0-9._:/@+-] and
+    single inner spaces (catalog names such as "Aion 3.5 Mini") are allowed, up to
+    100 characters. Anything else, a truncation, a registered secret or an echo of
+    the request text gives INVALID_MODEL_NAME. None or empty stays None.
+    """
+    if name is None:
+        return None
+    if not isinstance(name, str):
+        return INVALID_MODEL_NAME
+    v = name.strip()
+    if not v:
+        return None
+    if (len(v) > MAX_MODEL_NAME or not _MODEL_NAME_RE.fullmatch(v) or "  " in v
+            or redact(v) != v or (request_texts and _quotes_request(v, list(request_texts)))):
+        return INVALID_MODEL_NAME
+    return v
 
 
 def _norm(name: str) -> str:
@@ -85,19 +116,23 @@ def _norm(name: str) -> str:
 
 
 def same_model(requested: str, served: str) -> bool:
-    """True for an exact, case-insensitive or obvious alias match.
+    """True when the served name is the requested model.
 
-    Aliases: whitespace, '-' / ' ' / '_' treated alike, and a provider prefix
-    ('org/name') on either side when the part after the last '/' matches, or a
-    dash-separated prefix on either side when the shorter name has at least three
-    parts (an Uplink serves BGE-EN-ICL as text-embedding-bge-en-icl).
+    A match is: equal after lowercasing and treating ' ', '_' and '-' alike; or the
+    served name is 'org/<name>' and the request had no org, or both name the same
+    org, with the names equal; or a pair in MODEL_ALIASES. Anything else is a
+    substitution.
     """
+    if INVALID_MODEL_NAME in (requested, served):
+        return False
     a, b = _norm(requested), _norm(served)
-    a, b = a.rsplit("/", 1)[-1], b.rsplit("/", 1)[-1]
     if a == b:
         return True
-    short, long_ = sorted((a, b), key=len)
-    return short.count("-") >= 2 and long_.endswith("-" + short)
+    a_org, _, a_name = a.rpartition("/")
+    b_org, _, b_name = b.rpartition("/")
+    if a_name == b_name and (not a_org or a_org == b_org):
+        return True
+    return b in MODEL_ALIASES.get(a, set())
 
 
 class EmptyResponse(Exception):
@@ -124,13 +159,17 @@ def run_with_fallback(
     call: Callable[[str], dict[str, Any]],
     on_alert: Callable[[Alert], None] | None = None,
     clock: Callable[[], str] = now_iso,
+    request_texts: list[str] | tuple[str, ...] = (),
 ) -> dict[str, Any]:
     """Try ``call(model)`` for each model in order. Returns a JSON-able dict."""
     alerts: list[Alert | SubstitutionAlert] = []
 
     def alert(a: Alert | SubstitutionAlert) -> None:
         alerts.append(a)
-        logger.warning("%s", a.text())
+        if isinstance(a, SubstitutionAlert):
+            logger.info("%s", a.text())  # informational: shown on stderr with --verbose
+        else:
+            logger.warning("%s", a.text())
         if on_alert:
             on_alert(a)
 
@@ -140,29 +179,31 @@ def run_with_fallback(
         return handoff(alerts)
 
     for i, model in enumerate(models):
+        shown = clean_model_name(model, request_texts) or model
         try:
             data = call(model)
         except Exception as exc:  # noqa: BLE001 — every failure becomes an alert
             err, code = _fail_details(exc)
             nxt = models[i + 1] if i + 1 < len(models) else None
+            nxt = clean_model_name(nxt, request_texts) if nxt else None
             if code in AUTH_CODES:
                 action = ("The API key was rejected, so other Morpheus models were not tried; "
                           "returned control to the host model.")
-                alert(Alert(model, endpoint, err, code, clock(), action))
+                alert(Alert(shown, endpoint, err, code, clock(), action))
                 return handoff(alerts)
             if nxt:
                 action = f"Tried the next Morpheus model, {nxt}."
             else:
                 action = "No Morpheus model left; returned control to the host model."
-            alert(Alert(model, endpoint, err, code, clock(), action))
+            alert(Alert(shown, endpoint, err, code, clock(), action))
             continue
         data = dict(data)
-        served = data.pop("served_model", None)
-        served = redact(served.strip())[:200] if isinstance(served, str) and served.strip() else None
-        out: dict[str, Any] = {"status": "ok", "model_used": served or model,
-                               "requested_model": model, "endpoint": endpoint, **data}
-        if served and not same_model(model, served):
-            alert(SubstitutionAlert(redact(model), served, endpoint, clock()))
+        requested = clean_model_name(model, request_texts) or model
+        served = clean_model_name(data.pop("served_model", None), request_texts)
+        out: dict[str, Any] = {"status": "ok", "model_used": served or requested,
+                               "requested_model": requested, "endpoint": endpoint, **data}
+        if served and not same_model(requested, served):
+            alert(SubstitutionAlert(requested, served, endpoint, clock()))
         if alerts:
             out["alerts"] = [asdict(a) for a in alerts]
             out["user_alert"] = "\n".join(a.text() for a in alerts)

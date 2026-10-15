@@ -7,13 +7,16 @@
 
 ### Added
 - `requested_model` on every successful chat and embedding result.
-- A `model_substituted` alert (`requested`, `served`, `endpoint`, `time`) when the served model differs from the requested one by more than letter case, separators, a provider prefix or a dash-separated prefix (for example `text-embedding-bge-en-icl` for `BGE-EN-ICL`). It is added to `user_alert`, and the status stays `ok`.
+- An informational `model_substituted` entry (`requested`, `served`, `endpoint`, `time`, `severity: info`) when the endpoint chose a different model than the one requested. Names match if they differ only in letter case or separators, if the response adds a provider prefix to a name asked for without one or both use the same provider, or if the pair is in the alias list (`BGE-EN-ICL` and `text-embedding-bge-en-icl`). Its text ("served by <model> instead of <requested> (the endpoint picked the model)") is added to `user_alert`, the status stays `ok`, and the agent is told to mention it, not to treat it as a failure.
+
+### Security
+- Model names from the endpoint, and requested names when shown, are limited to letters, digits, single spaces and `. _ : / @ + -`, up to 100 characters. A name with anything else, a truncated name, or one that contains the key or repeats the request text is shown as `(invalid model name)` in every output.
 
 ### Changed
 - README Testing: recommends warm models, notes that `BGE-EN-ICL` embeddings work through an Uplink and hosted embedding models may be cold, and replaces the fallback checks with `BGE-EN-ICL,deepseek-v4-flash` and `BGE-EN-ICL,Aion 3.5 Mini`.
 - The install pin moves to `@v0.2.1`.
 
-## 0.2.0 (unreleased; tag `v0.2.0` is created after merge)
+## 0.2.0 (2026-10-15)
 
 ### Changed
 - The manifest moved to `.cursor-plugin/plugin.json` (Cursor Plugin format), so `logo` and `variables` are valid. The root `plugin.json` was removed.

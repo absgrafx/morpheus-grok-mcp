@@ -137,8 +137,8 @@ With `MORPHEUS_MODELS=deepseek-v4-flash`, try these prompts:
 
 Fallback checks:
 
-- `MORPHEUS_MODELS=BGE-EN-ICL,deepseek-v4-flash`: chat returns an alert for `BGE-EN-ICL` (an embedding model can't be used for chat), then `pong` from `deepseek-v4-flash`.
-- `MORPHEUS_MODELS=BGE-EN-ICL,Aion 3.5 Mini`: chat returns an alert for `BGE-EN-ICL`, and usually one for `Aion 3.5 Mini` when it is not warm, then `"status": "host_fallback"`, and your agent's own model answers.
+- Through an Uplink, `MORPHEUS_MODELS=BGE-EN-ICL,deepseek-v4-flash`: chat returns an alert for `BGE-EN-ICL` (an embedding model can't be used for chat), then `pong` from `deepseek-v4-flash`. On api.mor.org the endpoint may instead choose a different model, which shows as an informational `model_substituted` note.
+- `MORPHEUS_MODELS=BGE-EN-ICL,Aion 3.5 Mini`: chat returns an alert for `BGE-EN-ICL`. If `Aion 3.5 Mini` is not warm, a second alert follows, then `"status": "host_fallback"`, and your agent's own model answers. If it is warm, it answers with `"status": "ok"`.
 
 ## Alerts
 
@@ -167,17 +167,19 @@ Example `user_alert`:
 Morpheus alert at 2026-10-14T16:43:57-04:00: model no-such-model-xyz on https://uplink.example.com/v1/chat/completions failed (HTTP 404; invalid_request_error: model "no-such-model-xyz" not found in catalog). Action: Tried the next Morpheus model, deepseek-v4-flash.
 ```
 
-### Model substitution
+### Model substitution (informational)
 
-An endpoint can answer with a different model than the one requested. For example, api.mor.org may serve an unknown model name with another model. The plugin therefore reports two fields on every successful chat or embedding result:
+An endpoint can choose a different model than the one requested. For example, api.mor.org corrects close names and serves names it doesn't know with its default model. This is expected behaviour, not a failure, so the plugin reports it as information. Every successful chat or embedding result has two fields:
 
 - `model_used`: the model named in the response's `model` field. If the response has no `model` field, this is the requested model.
 - `requested_model`: the model the plugin asked for.
 
-If they differ by more than letter case, spaces, `-` versus `_` or a space, a provider prefix (`org/name` where `name` matches), or a dash-separated prefix on a name of three or more parts (an Uplink serves `BGE-EN-ICL` as `text-embedding-bge-en-icl`), the result keeps `"status": "ok"` and adds an alert with `type` `model_substituted` and the fields `requested`, `served`, `endpoint` and `time`. The alert text is added to `user_alert`, and the served name is masked like other alert text. Example:
+The plugin treats two names as the same model if they differ only in letter case or in spaces, `-` or `_`; if the response adds a provider prefix (`org/name`) to a name asked for without one, or both use the same provider; or if the pair is in the plugin's alias list (an Uplink serves `BGE-EN-ICL` as `text-embedding-bge-en-icl`). Otherwise the result keeps `"status": "ok"` and adds an informational entry to `alerts` with `type` `model_substituted`, `severity` `info`, and the fields `requested`, `served`, `endpoint` and `time`. Its text is added to `user_alert`, and `agent_instructions` tells the agent to mention it to you, not to treat it as a failure. It goes to Cursor as an info-level MCP log message, and to standard error only with `--verbose`.
+
+A model name from the endpoint is shown only if it uses letters, digits, single spaces and `. _ : / @ + -`, is at most 100 characters, and does not contain the key or repeat the request text. Otherwise every output (`model_used`, alerts, `user_alert`, MCP log messages and standard error) shows `(invalid model name)` instead. Requested names are checked the same way when they are shown. Example:
 
 ```text
-Morpheus alert at 2026-10-15T10:25:16-04:00: requested model nonexistent-model-xyz on https://api.mor.org/api/v1/chat/completions was served by google-gemma-4-31b-it. The answer is from google-gemma-4-31b-it.
+Morpheus note at 2026-10-15T10:25:16-04:00: served by google-gemma-4-31b-it instead of nonexistent-model-xyz on https://api.mor.org/api/v1/chat/completions (the endpoint picked the model).
 ```
 
 ## Privacy

@@ -110,6 +110,8 @@ def main() -> int:
         if rel == "CHANGELOG.md":
             # Older entries keep their own pins; only the current version's entry is checked.
             m = re.search(rf"^## {re.escape(version)}\b.*?(?=^## |\Z)", text, re.M | re.S)
+            if not m:
+                errors.append(f"CHANGELOG.md: no entry for {version} (expected a '## {version}' heading)")
             text = m.group(0) if m else ""
         for pin in re.findall(r"morpheus-grok-mcp(?:\.git)?@([^\s\"'`)]+)", text):
             if pin != f"v{version}":

@@ -25,7 +25,7 @@ async def test_stdio_tools_and_alert_log_messages():
         async with ClientSession(r, w, logging_callback=on_log) as s:
             init = await s.initialize()
             assert init.serverInfo.name == "morpheus-inference"
-            assert init.serverInfo.version == __version__ == "0.2.1"
+            assert init.serverInfo.version == __version__ == "0.2.2"
             tools = {t.name: t for t in (await s.list_tools()).tools}
             assert set(tools) == {"morpheus_chat", "morpheus_embed", "morpheus_list_models"}
             assert "ctx" not in tools["morpheus_chat"].inputSchema["properties"]

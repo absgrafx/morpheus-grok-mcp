@@ -2,7 +2,7 @@
 
 Submit page: https://cursor.directory/plugins/new ("Auto-detect from a GitHub repo or create one manually").
 The form's field list is not visible without signing in, so the fields below cover the usual set.
-Submit only after the v0.2.1 pull request is merged and the `v0.2.1` tag exists.
+Submit only after the v0.2.2 pull request is merged and the `v0.2.2` tag exists.
 
 ## Fields
 
@@ -12,7 +12,7 @@ Submit only after the v0.2.1 pull request is merged and the `v0.2.1` tag exists.
 | Slug / plugin id | `morpheus-inference` |
 | GitHub repository | https://github.com/absgrafx/morpheus-grok-mcp |
 | Homepage | https://github.com/absgrafx/morpheus-grok-mcp#readme |
-| Version | 0.2.1 |
+| Version | 0.2.2 |
 | Author | ABSGrafx |
 | Contact | devs@absgrafx.com |
 | License | MIT |
@@ -22,12 +22,13 @@ Submit only after the v0.2.1 pull request is merged and the `v0.2.1` tag exists.
 
 ## Short description
 
-Send chat and embedding requests to Morpheus, a decentralized AI inference network, through api.mor.org or your own Uplink.
+Run chat and tool calling on Morpheus, a decentralized AI inference network, through api.mor.org or your own Uplink. Embeddings are optional.
 
 ## Long description
 
-Morpheus Inference adds an MCP (Model Context Protocol) server with three tools to Cursor: `morpheus_chat`, `morpheus_embed` and
-`morpheus_list_models`. They call the OpenAI-compatible API of Morpheus, either the public
+Morpheus Inference adds an MCP (Model Context Protocol) server to Cursor. Its main tool,
+`morpheus_chat`, runs chat completions with tool calling (OpenAI-format `tools` and `tool_calls`).
+`morpheus_list_models` lists the models, and the optional `morpheus_embed` runs embeddings. They call the OpenAI-compatible API of Morpheus, either the public
 endpoint at api.mor.org or an Uplink you run yourself.
 
 - Opt-in: the agent uses Morpheus when you ask for it or have said you want it. Your agent's own
@@ -48,7 +49,7 @@ endpoint at api.mor.org or an Uplink you run yourself.
    `MORPHEUS_BASE_URL`. Optionally set `MORPHEUS_MODELS` (chat models, most preferred first), for example `model-a,model-b`.
 3. Ask the agent to run `morpheus_list_models` to check the connection.
 
-Requires [uv](https://docs.astral.sh/uv/) (the server runs with `uvx`, pinned to tag `v0.2.1`).
+Requires [uv](https://docs.astral.sh/uv/) (the server runs with `uvx`, pinned to tag `v0.2.2`).
 
 ## MCP config (as shipped in mcp.json)
 
@@ -58,7 +59,7 @@ Requires [uv](https://docs.astral.sh/uv/) (the server runs with `uvx`, pinned to
     "morpheus-inference": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/absgrafx/morpheus-grok-mcp@v0.2.1", "morpheus-mcp"],
+      "args": ["--from", "git+https://github.com/absgrafx/morpheus-grok-mcp@v0.2.2", "morpheus-mcp"],
       "env": {
         "MORPHEUS_API_KEY": "${MORPHEUS_API_KEY}",
         "MORPHEUS_MODE": "${MORPHEUS_MODE}",

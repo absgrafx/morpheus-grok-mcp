@@ -142,7 +142,9 @@ def same_model(requested: str, served: str) -> bool:
     """True when the served name is the requested model.
 
     A match is: equal after lowercasing and treating ' ', '_' and '-' alike (so
-    both have the same org, or neither has one); or a pair in MODEL_ALIASES.
+    both have the same org, or neither has one); a vendor self-prefix on a request
+    with no org ('deepseek/deepseek-v4-flash' for 'DeepSeek V4 Flash'); or a pair in
+    MODEL_ALIASES.
     Anything else is a substitution.
     """
     if not isinstance(requested, str) or not isinstance(served, str):
@@ -155,6 +157,11 @@ def same_model(requested: str, served: str) -> bool:
     a_org, _, a_name = a.rpartition("/")
     b_org, _, b_name = b.rpartition("/")
     if a_name == b_name and a_org == b_org:
+        return True
+    # Vendor self-prefix: a request with no org may be served as "<org>/<name>" only when
+    # the name itself starts with that org (deepseek/deepseek-v4-flash). Any other added
+    # org (evilorg/llama-3-70b, meta/llama-3-70b) is a different publisher and is noted.
+    if not a_org and b_org and a_name == b_name and b_name.startswith(b_org):
         return True
     return b in MODEL_ALIASES.get(a, set())
 

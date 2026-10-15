@@ -1,8 +1,8 @@
 ---
 name: use-morpheus-model
 description: >-
-  Run a chat or embedding request on Morpheus decentralized inference with the
-  morpheus_chat and morpheus_embed tools. Use only when the user asks for
+  Run a chat request, including tool calling, on Morpheus decentralized
+  inference with the morpheus_chat tool (embeddings are optional). Use only when the user asks for
   Morpheus or has said they want Morpheus used. Handles fallback and alerts.
 ---
 
@@ -19,8 +19,8 @@ Otherwise, keep working the way you normally do. This skill does not replace you
 
 ## How to call
 
-- `morpheus_chat`: pass `messages` in the OpenAI chat format. `model` is optional: if you leave it out, the models the user set in **Model hierarchy** are tried in order. If you pass no `model` and the hierarchy is empty, nothing is sent to Morpheus and the result is `host_fallback` with an alert; tell the user to set **Model hierarchy** or name a model.
-- `morpheus_embed`: pass `input` and `model`, plus `fallback_models` if you want other embedding models tried.
+- `morpheus_chat`: pass `messages` in the OpenAI chat format, and `tools` (OpenAI function format) for tool calling; calls come back in `tool_calls`. `model` is optional: if you leave it out, the models the user set in **Model hierarchy** are tried in order. If you pass no `model` and the hierarchy is empty, nothing is sent to Morpheus and the result is `host_fallback` with an alert; tell the user to set **Model hierarchy** or name a model.
+- `morpheus_embed` (optional, embeddings only): pass `input` and `model`, plus `fallback_models` if you want other embedding models tried.
 - `morpheus_list_models`: shows the model ids on the endpoint and the configured hierarchy. Use exact ids from this list. If it fails, it also returns `host_fallback` with an alert.
 
 Never put API keys, passwords or wallet secrets in messages or tool arguments.

@@ -1,4 +1,4 @@
-# Design notes (v0.2.1)
+# Design notes (v0.2.2)
 
 ## Shape
 

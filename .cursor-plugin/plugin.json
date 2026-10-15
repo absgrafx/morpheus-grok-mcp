@@ -1,7 +1,7 @@
 {
   "name": "morpheus-inference",
-  "version": "0.2.1",
-  "description": "Send chat and embedding requests to Morpheus, a decentralized AI inference network, through api.mor.org or your own Uplink.",
+  "version": "0.2.2",
+  "description": "Run chat and tool calling on Morpheus, a decentralized AI inference network, through api.mor.org or your own Uplink. Embeddings are optional.",
   "author": {
     "name": "ABSGrafx",
     "email": "devs@absgrafx.com"

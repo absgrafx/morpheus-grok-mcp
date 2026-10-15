@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.2.1 (unreleased; tag `v0.2.1` is created after merge)
+## 0.2.2 (unreleased)
+
+### Fixed
+- A request with no provider served under the vendor's own prefix (an Uplink serves `DeepSeek V4 Flash` as `deepseek/deepseek-v4-flash`) no longer raises a `model_substituted` note. The served name must equal the request after normalising and start with the provider. Any other added provider (`evilorg/llama-3-70b`, `meta/llama-3-70b`) is still noted.
+
+### Changed
+- README, listing and skill lead with chat and tool calling; embeddings are an optional note.
+- README Testing: the embedding step is replaced by a tool-calling test (`get_weather` with `{"city": "Boston"}`).
+- Version 0.2.2; the install pin moves to `@v0.2.2`.
+
+## 0.2.1 (2026-10-15)
 
 ### Fixed
 - `model_used` now reports the model named in the response's `model` field for chat and embeddings, falling back to the requested name only when the field is absent. Before, it always showed the requested name, even when the endpoint served another model (for example, api.mor.org served `nonexistent-model-xyz` with `google-gemma-4-31b-it`).

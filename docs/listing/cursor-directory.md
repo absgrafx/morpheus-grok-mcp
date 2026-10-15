@@ -22,24 +22,15 @@ Submit only after the v0.2.2 pull request is merged and the `v0.2.2` tag exists.
 
 ## Short description
 
-Run chat and tool calling on Morpheus, a decentralized AI inference network, through api.mor.org or your own Uplink. Embeddings are optional.
+Chat and tool calling on Morpheus decentralized inference, via api.mor.org or your own Uplink. Embeddings optional. https://github.com/absgrafx/morpheus-grok-mcp#readme
 
 ## Long description
 
-Morpheus Inference adds an MCP (Model Context Protocol) server to Cursor. Its main tool,
-`morpheus_chat`, runs chat completions with tool calling (OpenAI-format `tools` and `tool_calls`).
-`morpheus_list_models` lists the models, and the optional `morpheus_embed` runs embeddings. They call the OpenAI-compatible API of Morpheus, either the public
-endpoint at api.mor.org or an Uplink you run yourself.
-
-- Opt-in: the agent uses Morpheus when you ask for it or have said you want it. Your agent's own
-  model stays as it is.
-- Three settings: an API key, a mode (`api.mor.org` or `uplink`) and, for Uplink, a base URL.
-- Model hierarchy for chat: list the chat models you prefer, in order. On an error or timeout the
-  next model is tried. If none works, or none is set, the tool tells your agent to use its own model.
-- Alerts: every failure is reported to you and the agent with the model, endpoint, HTTP status
-  code or a short parsed error message, time, and what was done instead. Nothing is retried
-  silently. The key is always masked and request text is never included.
-- No telemetry. The key is set in Cursor's plugin configuration and never stored in the repo.
+Morpheus Inference adds an MCP (Model Context Protocol) server to Cursor. `morpheus_chat` runs chat
+with tool calling (OpenAI-format `tools` and `tool_calls`) on api.mor.org or your own Uplink;
+embeddings are optional. Opt-in: your agent's own model stays as it is. Set a key, a mode and a
+model list. On a failure the next model is tried, then your agent's model, with an alert each time.
+The key is always masked, and there is no telemetry. Docs: https://github.com/absgrafx/morpheus-grok-mcp#readme
 
 ## Setup
 
@@ -48,6 +39,7 @@ endpoint at api.mor.org or an Uplink you run yourself.
 2. Install the plugin and set `MORPHEUS_API_KEY`, `MORPHEUS_MODE` and, for Uplink,
    `MORPHEUS_BASE_URL`. Optionally set `MORPHEUS_MODELS` (chat models, most preferred first), for example `model-a,model-b`.
 3. Ask the agent to run `morpheus_list_models` to check the connection.
+4. Full setup, testing and troubleshooting: https://github.com/absgrafx/morpheus-grok-mcp#readme
 
 Requires [uv](https://docs.astral.sh/uv/) (the server runs with `uvx`, pinned to tag `v0.2.2`).
 

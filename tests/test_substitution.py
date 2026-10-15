@@ -285,3 +285,21 @@ def test_vendor_self_prefix():
     assert r["model_used"] == "deepseek/deepseek-v4-flash" and "alerts" not in r
     r = server.do_chat(MSG, model="llama-3-70b", client=chat_client("meta/llama-3-70b"))
     assert r["alerts"][0]["type"] == "model_substituted"
+
+
+def test_vendor_prefix_must_be_whole_first_word():
+    for served in ("d/deepseek-v4-flash", "deep/deepseek-v4-flash", "deepseekv/deepseek-v4-flash"):
+        assert not same_model("deepseek-v4-flash", served), served
+    assert not same_model("llama-3-70b", "l/llama-3-70b")
+    assert not same_model("model", "m/model")
+    assert not same_model("deepseek-v4-flash", "a/deepseek/deepseek-v4-flash")
+    assert same_model("deepseek-v4-flash", "deepseek/deepseek-v4-flash")
+    assert same_model("qwen3-coder-480b", "qwen/qwen3-coder-480b")
+    assert same_model("Qwen 3 Coder", "qwen/qwen-3-coder")
+    assert same_model("model", "model/model")
+    for served in ("d/deepseek-v4-flash", "deep/deepseek-v4-flash"):
+        r = server.do_chat(MSG, model="deepseek-v4-flash", client=chat_client(served))
+        assert r["alerts"][0]["type"] == "model_substituted", served
+    for req, served in (("llama-3-70b", "l/llama-3-70b"), ("model", "m/model")):
+        r = server.do_chat(MSG, model=req, client=chat_client(served))
+        assert r["alerts"][0]["type"] == "model_substituted", served

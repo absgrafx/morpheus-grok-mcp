@@ -3,12 +3,13 @@
 ## 0.2.2 (unreleased)
 
 ### Fixed
-- A request with no provider served under the vendor's own prefix (an Uplink serves `DeepSeek V4 Flash` as `deepseek/deepseek-v4-flash`) no longer raises a `model_substituted` note. The served name must equal the request after normalising and start with the provider. Any other added provider (`evilorg/llama-3-70b`, `meta/llama-3-70b`) is still noted.
+- A request with no provider served under the vendor's own prefix (an Uplink serves `DeepSeek V4 Flash` as `deepseek/deepseek-v4-flash`) no longer raises a `model_substituted` note. The served name must equal the request after normalising, and the provider must be the name's whole first word: the name equals the provider or continues with `-` or a digit (`deepseek/deepseek-v4-flash`, `qwen/qwen3-coder-480b`). Any other added provider, including a partial one (`evilorg/llama-3-70b`, `meta/llama-3-70b`, `l/llama-3-70b`, `deep/deepseek-v4-flash`), is still noted.
 
 ### Changed
 - README, listing and skill lead with chat and tool calling; embeddings are an optional note.
 - README Testing: the embedding step is replaced by a tool-calling test (`get_weather` with `{"city": "Boston"}`).
-- README Troubleshooting: what to do about `spawn uvx ENOENT` on macOS, where apps opened from the Dock or Finder don't get the shell `PATH`. Use the full path from `which uvx` as the `"command"` in `mcp.json`, or install uv with `brew install uv`.
+- README Troubleshooting: what to do about `spawn uvx ENOENT` on macOS, where apps opened from the Dock or Finder don't get the shell `PATH`. Install uv if needed (`brew install uv` or the uv installer), then use the full path from `which uvx` as the `"command"` in `mcp.json`. With a Marketplace install, edit a local copy (see "From a clone").
+- The cursor.directory listing draft: a shorter long description (about 500 characters) that leads with chat and tool calling, and README links in the short, long and setup blocks.
 - Version 0.2.2; the install pin moves to `@v0.2.2`.
 
 ## 0.2.1 (2026-10-15)

@@ -1,4 +1,4 @@
-"""Morpheus Inference MCP server (stdio)."""
+"""Morpheus Inference MCP server (stdio): chat and tool calling (embeddings optional)."""
 
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ setup_logging()
 mcp = FastMCP(
     "morpheus-inference",
     instructions=(
-        "Optional tools that run chat and embeddings on Morpheus decentralized inference "
+        "Optional tools that run chat and tool calling (embeddings optional) on Morpheus decentralized inference "
         "(api.mor.org or the user's own Uplink). Use them when the user asks for Morpheus or "
         "has enabled it. If a result has status host_fallback, use your own model and show the "
         "user the user_alert text. Never put API keys in prompts or tool arguments."

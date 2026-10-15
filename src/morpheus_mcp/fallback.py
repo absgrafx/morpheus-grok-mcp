@@ -138,6 +138,12 @@ def _norm(name: str) -> str:
     return _SEP_RE.sub("-", name.strip().lower()).strip("-")
 
 
+def _vendor_prefix(org: str, name: str) -> bool:
+    if name == org:
+        return True
+    return name.startswith(org) and (name[len(org)] == "-" or name[len(org)].isdigit())
+
+
 def same_model(requested: str, served: str) -> bool:
     """True when the served name is the requested model.
 
@@ -159,9 +165,10 @@ def same_model(requested: str, served: str) -> bool:
     if a_name == b_name and a_org == b_org:
         return True
     # Vendor self-prefix: a request with no org may be served as "<org>/<name>" only when
-    # the name itself starts with that org (deepseek/deepseek-v4-flash). Any other added
-    # org (evilorg/llama-3-70b, meta/llama-3-70b) is a different publisher and is noted.
-    if not a_org and b_org and a_name == b_name and b_name.startswith(b_org):
+    # the org is the name's whole first word: the name equals the org, or continues with
+    # "-" or a digit (deepseek/deepseek-v4-flash, qwen/qwen3-coder). A partial or other org
+    # (d/deepseek-v4-flash, l/llama-3-70b, evilorg/llama-3-70b) is a different publisher.
+    if not a_org and b_org and "/" not in b_org and a_name == b_name and _vendor_prefix(b_org, b_name):
         return True
     return b in MODEL_ALIASES.get(a, set())
 

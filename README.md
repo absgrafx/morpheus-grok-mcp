@@ -4,23 +4,25 @@
   <img src="assets/logo.png" alt="Morpheus Inference logo" width="128" height="128" />
 </p>
 
-Send chat and embedding requests to Morpheus, a decentralized AI inference network, through api.mor.org or your own Uplink.
+Run chat and tool calling on Morpheus, a decentralized AI inference network, through api.mor.org or your own Uplink. Embeddings are optional.
 
 - Plugin name: `morpheus-inference` (Cursor Plugin, manifest in `.cursor-plugin/plugin.json`)
 - Repository: `absgrafx/morpheus-grok-mcp`
-- Version: 0.2.1 (see [CHANGELOG.md](CHANGELOG.md))
+- Version: 0.2.2 (see [CHANGELOG.md](CHANGELOG.md))
 - Author: ABSGrafx, devs@absgrafx.com
 - License: MIT
 
 ## What it does
 
-The plugin adds an MCP (Model Context Protocol) server, which gives your agent three tools, plus two skills.
+The plugin adds an MCP (Model Context Protocol) server, which gives your agent three tools, plus two skills. The main tool is `morpheus_chat`: chat completions with tool calling (pass OpenAI-format `tools`, get `tool_calls` back).
 
 | Tool | What it calls |
 |------|---------------|
-| `morpheus_chat` | `POST {base}/chat/completions` |
-| `morpheus_embed` | `POST {base}/embeddings` |
+| `morpheus_chat` | `POST {base}/chat/completions` (chat and tool calling) |
 | `morpheus_list_models` | `GET {base}/models` |
+| `morpheus_embed` (optional) | `POST {base}/embeddings` |
+
+Embeddings are optional: `morpheus_embed` takes an explicit embedding `model`, for example `BGE-EN-ICL` through an Uplink. Hosted api.mor.org embedding models may be cold.
 
 | Skill | Purpose |
 |-------|---------|
@@ -44,11 +46,11 @@ Keep the key out of chat, prompts, and files in your repo.
 
 The listing is not live yet. Cursor's [plugin documentation](https://cursor.com/docs/plugins#installing-plugins) describes the install steps: open **Customize** in the sidebar, find the plugin, and select **Install**. Then set the values described in [Configuration](#configuration).
 
-`mcp.json` starts the server with `uvx`, pinned to the `v0.2.1` tag of this repository:
+`mcp.json` starts the server with `uvx`, pinned to the `v0.2.2` tag of this repository:
 
 ```json
 "command": "uvx",
-"args": ["--from", "git+https://github.com/absgrafx/morpheus-grok-mcp@v0.2.1", "morpheus-mcp"]
+"args": ["--from", "git+https://github.com/absgrafx/morpheus-grok-mcp@v0.2.2", "morpheus-mcp"]
 ```
 
 You need [uv](https://docs.astral.sh/uv/) installed for `uvx`. See [Supply chain](#supply-chain) for what the pin covers.
@@ -120,10 +122,8 @@ Example: with `MORPHEUS_MODELS` set to `model-a,model-b`, suppose `model-a` retu
 ## Testing
 
 1. Get a key. Mint your own at [app.mor.org](https://app.mor.org), which includes $1 of free inference, or use an Uplink Prompt key (not the Master key).
-2. Set `MORPHEUS_MODELS`. Without it, a chat call that names no model goes straight to `host_fallback`. `morpheus_embed` does not read `MORPHEUS_MODELS`, so it always needs an explicit `model` argument.
-3. Use these test models:
-   - Chat: `deepseek-v4-flash`, a warm hosted model. It is a reasoning model, so a reply can take up to about 60 seconds.
-   - Embeddings: `BGE-EN-ICL` works through an Uplink. Hosted api.mor.org embedding models may be cold, so an embedding call there can fail until one is warm.
+2. Set `MORPHEUS_MODELS`. Without it, a chat call that names no model goes straight to `host_fallback`.
+3. Use a warm chat model: `deepseek-v4-flash`. It is a reasoning model, so a reply can take up to about 60 seconds.
 
 Use warm models for testing. Cheaper hosted models (for example `Aion 3.5 Mini`) may return HTTP 503 `model_unavailable` when they are not warm. Try another warm model or use an Uplink.
 
@@ -133,7 +133,20 @@ With `MORPHEUS_MODELS=deepseek-v4-flash`, try these prompts:
 |--------|-----------------|
 | "List the Morpheus models" | `morpheus_list_models` returns `"status": "ok"` and the model list. |
 | "Use morpheus_chat: reply with the word pong" | `"status": "ok"`, `model_used` and `requested_model` are `deepseek-v4-flash`, and the content is `pong`. |
-| "Embed 'hello world' with morpheus_embed using BGE-EN-ICL" | `"status": "ok"` and a vector with 4096 dimensions. Through an Uplink, `model_used` is `text-embedding-bge-en-icl`. |
+| "Use morpheus_chat with a `get_weather` tool (parameters: `city`, a string): What's the weather in Boston?" | `"status": "ok"` and `tool_calls` with one call to `get_weather` with arguments `{"city": "Boston"}`. |
+
+The tool-calling test as a `morpheus_chat` call:
+
+```json
+{
+  "messages": [{"role": "user", "content": "What's the weather in Boston?"}],
+  "tools": [{"type": "function", "function": {
+    "name": "get_weather",
+    "description": "Get the current weather for a city",
+    "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}
+  }}]
+}
+```
 
 Fallback checks:
 
@@ -174,7 +187,7 @@ An endpoint can choose a different model than the one requested. For example, ap
 - `model_used`: the model named in the response's `model` field. If the response has no `model` field, this is the requested model.
 - `requested_model`: the model the plugin asked for.
 
-The plugin treats two names as the same model if they differ only in letter case or in spaces, `-` or `_`, or if the pair is in the plugin's alias list (an Uplink serves `BGE-EN-ICL` as `text-embedding-bge-en-icl`). Otherwise the result keeps `"status": "ok"` and adds an informational entry to `alerts` with `type` `model_substituted`, `severity` `info`, and the fields `requested`, `served`, `endpoint` and `time`. Its text is added to `user_alert`, and `agent_instructions` tells the agent to mention it to you, not to treat it as a failure. It goes to Cursor as an info-level MCP log message, and to standard error only with `--verbose`. Log lines never contain newlines or other control characters.
+The plugin treats two names as the same model if they differ only in letter case or in spaces, `-` or `_`, if the request has no provider and the response adds a known vendor's prefix (`deepseek/deepseek-v4-flash` for `DeepSeek V4 Flash`; the vendors are `deepseek`, `qwen`, `meta-llama`, `mistralai`, `google`, `openai`, `moonshotai` and `tencent`), or if the pair is in the plugin's alias list (an Uplink serves `BGE-EN-ICL` as `text-embedding-bge-en-icl`). Any other added provider (for example `evilorg/llama-3-70b`, `meta/llama-3-70b` or `llama/llama-3-70b` for `llama-3-70b`, `o/o3`, or `deep/deepseek-v4-flash`) can mean different weights, so it is noted. Otherwise the result keeps `"status": "ok"` and adds an informational entry to `alerts` with `type` `model_substituted`, `severity` `info`, and the fields `requested`, `served`, `endpoint` and `time`. Its text is added to `user_alert`, and `agent_instructions` tells the agent to mention it to you, not to treat it as a failure. It goes to Cursor as an info-level MCP log message, and to standard error only with `--verbose`. Log lines never contain newlines or other control characters.
 
 A model name from the endpoint is shown only if it uses letters, digits and `. _ : / @ + -`, is at most 100 characters, and does not contain the key or repeat the request text. Otherwise every output (`model_used`, alerts, `user_alert`, MCP log messages and standard error) shows `(invalid model name)` instead. A name from the endpoint may contain spaces only if it is the requested model or an alias of it (for example `Aion 3.5 Mini` for `aion-3.5-mini`). A different served name must also be at most 64 characters with at most 8 parts (split on `. _ : / @ + -`), and no part may be a word such as `system`, `ignore`, `instructions`, `prompt`, `api`, `key` or `password` (parts are also split at camelCase and letter-digit boundaries for this check, so `SystemIgnoreApiKey` is rejected). In `user_alert`, both the served and the requested name are shown in quotes. Requested names are checked the same way when they are shown, and may contain single spaces. Example:
 
@@ -194,9 +207,19 @@ Morpheus note at 2026-10-15T10:25:16-04:00: served by "google-gemma-4-31b-it" in
 
 ## Supply chain
 
-- The install is pinned to the `v0.2.1` tag. A Git tag can be moved, so a commit-hash pin would be stronger. It can't be used here because the release commit only exists after the merge, so the tag is the pin for 0.2.1.
+- The install is pinned to the `v0.2.2` tag. A Git tag can be moved, so a commit-hash pin would be stronger. It can't be used here because the release commit only exists after the merge, so the tag is the pin for 0.2.2.
 - `uvx --from git+...` does not read `uv.lock`, so `pyproject.toml` pins the two direct dependencies exactly (`mcp==1.30.0`, `httpx==0.28.1`). Their own dependencies are resolved at install time.
 - The CI workflow pins its GitHub Actions to commit hashes and has read-only repository access.
+
+## Troubleshooting
+
+**`spawn uvx ENOENT` on macOS.** Apps opened from the Dock or Finder don't get your shell's `PATH`, so Cursor can't find `uvx`.
+
+1. If you don't have uv yet, install it with `brew install uv` (or the [uv installer](https://docs.astral.sh/uv/getting-started/installation/)).
+2. Run `which uvx` in Terminal; it shows the real path.
+3. Put that full path as the `"command"` in `mcp.json`, for example `"command": "<full path from which uvx>"`, then restart Cursor.
+
+With a Marketplace install, the plugin manages `mcp.json`, so edit a local copy instead: see [From a clone](#from-a-clone-local-testing).
 
 ## Support
 

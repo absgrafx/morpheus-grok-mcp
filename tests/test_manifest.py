@@ -26,7 +26,8 @@ BANNED_PREFIX_HASHES = {
     (12, "ad2870710bc39a5dfc7392ba15b2bb3cb29d88d24a9bb8dce06c7a1126f2f828"),
 }
 # Any absolute filesystem path under a top-level directory (for example a home or work directory).
-ABS_PATH_RE = r"(?:^|[\s\"'`(=])/(?!v1\b|chat/completions\b)[A-Za-z_][\w.-]*/[\w.-]"
+# Exception: the standard Homebrew uvx path, used as an example in Troubleshooting.
+ABS_PATH_RE = r"(?:^|[\s\"'`(=])/(?!v1\b|chat/completions\b|opt/homebrew/bin/uvx\b)[A-Za-z_][\w.-]*/[\w.-]"
 # Generic terms, checked literally (regex).
 BANNED_PATTERNS = [
     r"\bMoE\b", r"(?i)curat", r"(?i)allowlist", r"(?i)\bthis PR\b",
@@ -99,7 +100,8 @@ def test_ban_check_catches_examples(monkeypatch):
 def test_absolute_path_check():
     for t in ("see /srv/data/x", "cd /opt/app", "path=/tmp/a", "`/usr/lib`"):
         assert find_banned(t), t
-    for t in ("https://api.example.com/v1/chat", "/v1/models", "POST /chat/completions", "and/or", "a / b"):
+    assert find_banned("/opt/homebrew/bin/other") and find_banned("/opt/app/x")
+    for t in ('"command": "/opt/homebrew/bin/uvx"', "https://api.example.com/v1/chat", "/v1/models", "POST /chat/completions", "and/or", "a / b"):
         assert not find_banned(t), t
 
 

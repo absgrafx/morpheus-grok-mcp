@@ -211,6 +211,15 @@ Morpheus note at 2026-10-15T10:25:16-04:00: served by "google-gemma-4-31b-it" in
 - `uvx --from git+...` does not read `uv.lock`, so `pyproject.toml` pins the two direct dependencies exactly (`mcp==1.30.0`, `httpx==0.28.1`). Their own dependencies are resolved at install time.
 - The CI workflow pins its GitHub Actions to commit hashes and has read-only repository access.
 
+## Troubleshooting
+
+**`spawn uvx ENOENT` on macOS.** Apps opened from the Dock or Finder don't get your shell's `PATH`, so Cursor can't find `uvx`. Either:
+
+- Run `which uvx` in Terminal and put that full path as the `"command"` in `mcp.json`, for example `"command": "/opt/homebrew/bin/uvx"`. Or
+- Install uv with `brew install uv`.
+
+Then restart Cursor.
+
 ## Support
 
 Email devs@absgrafx.com or open an issue on this repository.

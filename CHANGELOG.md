@@ -8,6 +8,7 @@
 ### Changed
 - README, listing and skill lead with chat and tool calling; embeddings are an optional note.
 - README Testing: the embedding step is replaced by a tool-calling test (`get_weather` with `{"city": "Boston"}`).
+- README Troubleshooting: what to do about `spawn uvx ENOENT` on macOS, where apps opened from the Dock or Finder don't get the shell `PATH`. Use the full path from `which uvx` as the `"command"` in `mcp.json`, or install uv with `brew install uv`.
 - Version 0.2.2; the install pin moves to `@v0.2.2`.
 
 ## 0.2.1 (2026-10-15)

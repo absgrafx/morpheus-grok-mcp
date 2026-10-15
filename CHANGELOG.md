@@ -3,7 +3,7 @@
 ## 0.2.2 (unreleased)
 
 ### Fixed
-- A request with no provider served under the vendor's own prefix (an Uplink serves `DeepSeek V4 Flash` as `deepseek/deepseek-v4-flash`) no longer raises a `model_substituted` note. The served name must equal the request after normalising, and the provider must be the name's whole first word: the name equals the provider or continues with `-` or a digit (`deepseek/deepseek-v4-flash`, `qwen/qwen3-coder-480b`). Any other added provider, including a partial one (`evilorg/llama-3-70b`, `meta/llama-3-70b`, `l/llama-3-70b`, `deep/deepseek-v4-flash`), is still noted.
+- A request with no provider served under a known vendor's prefix (an Uplink serves `DeepSeek V4 Flash` as `deepseek/deepseek-v4-flash`) no longer raises a `model_substituted` note. The provider must be in an explicit list (`deepseek`, `qwen`, `meta-llama`, `mistralai`, `google`, `openai`, `moonshotai`, `tencent`) and the rest must equal the request after normalising. Any other added provider is still noted, including one-letter, partial and family-name ones (`o/o3`, `r/r1`, `deep/deepseek-v4-flash`, `gpt/gpt-4o`, `llama/llama-3-70b`, `evilorg/llama-3-70b`, `meta/llama-3-70b`).
 
 ### Changed
 - README, listing and skill lead with chat and tool calling; embeddings are an optional note.

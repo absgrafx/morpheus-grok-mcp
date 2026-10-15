@@ -138,19 +138,21 @@ def _norm(name: str) -> str:
     return _SEP_RE.sub("-", name.strip().lower()).strip("-")
 
 
-def _vendor_prefix(org: str, name: str) -> bool:
-    if name == org:
-        return True
-    return name.startswith(org) and (name[len(org)] == "-" or name[len(org)].isdigit())
+# Providers whose prefix an endpoint may add to a model asked for without one. Normalised
+# (lowercase, '-' for ' ' and '_'). Any other added provider is a possible publisher change.
+KNOWN_VENDORS = frozenset({
+    "deepseek", "qwen", "meta-llama", "mistralai", "google", "openai",  # common publishers
+    "moonshotai", "tencent",  # served with a provider prefix in the Morpheus catalogs (2026-10-15)
+})
 
 
 def same_model(requested: str, served: str) -> bool:
     """True when the served name is the requested model.
 
     A match is: equal after lowercasing and treating ' ', '_' and '-' alike (so
-    both have the same org, or neither has one); a vendor self-prefix on a request
-    with no org ('deepseek/deepseek-v4-flash' for 'DeepSeek V4 Flash'); or a pair in
-    MODEL_ALIASES.
+    both have the same org, or neither has one); a KNOWN_VENDORS prefix added to a
+    request with no org ('deepseek/deepseek-v4-flash' for 'DeepSeek V4 Flash'); or a pair
+    in MODEL_ALIASES.
     Anything else is a substitution.
     """
     if not isinstance(requested, str) or not isinstance(served, str):
@@ -164,11 +166,10 @@ def same_model(requested: str, served: str) -> bool:
     b_org, _, b_name = b.rpartition("/")
     if a_name == b_name and a_org == b_org:
         return True
-    # Vendor self-prefix: a request with no org may be served as "<org>/<name>" only when
-    # the org is the name's whole first word: the name equals the org, or continues with
-    # "-" or a digit (deepseek/deepseek-v4-flash, qwen/qwen3-coder). A partial or other org
-    # (d/deepseek-v4-flash, l/llama-3-70b, evilorg/llama-3-70b) is a different publisher.
-    if not a_org and b_org and "/" not in b_org and a_name == b_name and _vendor_prefix(b_org, b_name):
+    # Known vendor prefix: a request with no org may be served as "<org>/<name>" only when
+    # the org is in KNOWN_VENDORS (deepseek/deepseek-v4-flash). Any other added org
+    # (o/o3, deep/deepseek-v4-flash, gpt/gpt-4o, evilorg/llama-3-70b) is noted.
+    if not a_org and b_org in KNOWN_VENDORS and a_name == b_name:
         return True
     return b in MODEL_ALIASES.get(a, set())
 

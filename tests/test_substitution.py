@@ -273,10 +273,10 @@ def test_camel_case_injection_is_invalid():
     assert "SystemIgnore" not in json.dumps(r)
 
 
-def test_vendor_self_prefix():
+def test_known_vendor_prefix_basics():
     assert same_model("DeepSeek V4 Flash", "deepseek/deepseek-v4-flash")
     assert same_model("qwen3-coder-480b", "qwen/qwen3-coder-480b")
-    assert not same_model("gemma-4-31b", "google/gemma-4-31b")       # name doesn't start with the org
+    assert same_model("gemma-4-31b", "google/gemma-4-31b")       # google is a known vendor
     assert not same_model("llama-3-70b", "evilorg/llama-3-70b")
     assert not same_model("llama-3-70b", "meta/llama-3-70b")
     assert not same_model("deepseek/deepseek-v4-flash", "other/deepseek-v4-flash")
@@ -287,19 +287,26 @@ def test_vendor_self_prefix():
     assert r["alerts"][0]["type"] == "model_substituted"
 
 
-def test_vendor_prefix_must_be_whole_first_word():
-    for served in ("d/deepseek-v4-flash", "deep/deepseek-v4-flash", "deepseekv/deepseek-v4-flash"):
-        assert not same_model("deepseek-v4-flash", served), served
-    assert not same_model("llama-3-70b", "l/llama-3-70b")
-    assert not same_model("model", "m/model")
-    assert not same_model("deepseek-v4-flash", "a/deepseek/deepseek-v4-flash")
-    assert same_model("deepseek-v4-flash", "deepseek/deepseek-v4-flash")
-    assert same_model("qwen3-coder-480b", "qwen/qwen3-coder-480b")
-    assert same_model("Qwen 3 Coder", "qwen/qwen-3-coder")
-    assert same_model("model", "model/model")
-    for served in ("d/deepseek-v4-flash", "deep/deepseek-v4-flash"):
-        r = server.do_chat(MSG, model="deepseek-v4-flash", client=chat_client(served))
-        assert r["alerts"][0]["type"] == "model_substituted", served
-    for req, served in (("llama-3-70b", "l/llama-3-70b"), ("model", "m/model")):
+def test_known_vendor_prefix_only():
+    from morpheus_mcp.fallback import KNOWN_VENDORS
+    assert {"deepseek", "qwen", "meta-llama", "mistralai", "google", "openai"} <= KNOWN_VENDORS
+    cases = [("o3", "o/o3"), ("r1", "r/r1"), ("q1", "q/q1"), ("d3", "d/d3"),
+             ("deepseek-v4-flash", "deepseek-v/deepseek-v4-flash"),
+             ("deepseek-v4-flash", "deepseek-v4/deepseek-v4-flash"),
+             ("deepseek-v4-flash", "d/deepseek-v4-flash"), ("deepseek-v4-flash", "deep/deepseek-v4-flash"),
+             ("gpt-4o", "gpt/gpt-4o"), ("llama-3-70b", "llama/llama-3-70b"),
+             ("llama-3-70b", "evilorg/llama-3-70b"), ("llama-3-70b", "meta/llama-3-70b"),
+             ("deepseek-v4-flash", "a/deepseek/deepseek-v4-flash"),
+             ("deepseek-v4-flash", "deepseek/evil-deepseek-v4-flash"),
+             ("deepseek/deepseek-v4-flash", "qwen/deepseek-v4-flash"), ("model", "m/model")]
+    for req, served in cases:
+        assert not same_model(req, served), served
         r = server.do_chat(MSG, model=req, client=chat_client(served))
         assert r["alerts"][0]["type"] == "model_substituted", served
+    for req, served in (("DeepSeek V4 Flash", "deepseek/deepseek-v4-flash"),
+                        ("qwen3-coder-480b", "qwen/qwen3-coder-480b"),
+                        ("Llama 3.3 70B Instruct", "meta-llama/Llama-3.3-70B-Instruct"),
+                        ("kimi-k3", "moonshotai/kimi-k3"), ("gpt-4o", "openai/gpt-4o")):
+        assert same_model(req, served), served
+        r = server.do_chat(MSG, model=req, client=chat_client(served))
+        assert "alerts" not in r and r["model_used"] == served

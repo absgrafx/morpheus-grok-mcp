@@ -83,6 +83,8 @@ MAX_MODEL_NAME = 100
 MAX_SUBSTITUTED_NAME = 64
 MAX_NAME_TOKENS = 8
 _TOKEN_SPLIT_RE = re.compile(r"[._:/@+\-]+")
+# Sub-words inside a token: camelCase humps, ALLCAPS runs and digit runs.
+_SUBWORD_RE = re.compile(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+")
 # Whole tokens (case-insensitive) that a real model id never needs. "instruct" is not here.
 DENY_TOKENS = frozenset({
     "system", "ignore", "previous", "instruction", "instructions", "assistant", "user",
@@ -123,10 +125,13 @@ def suspicious_model_name(name: str) -> bool:
     """Stricter check for a served name that is not the requested model or an alias."""
     if len(name) > MAX_SUBSTITUTED_NAME:
         return True
-    tokens = [t for t in _TOKEN_SPLIT_RE.split(name.lower()) if t]
-    if len(tokens) > MAX_NAME_TOKENS:
+    tokens = [t for t in _TOKEN_SPLIT_RE.split(name) if t]
+    if len(tokens) > MAX_NAME_TOKENS:  # separator tokens only
         return True
-    return any(t in DENY_TOKENS for t in tokens)
+    words = {t.lower() for t in tokens}
+    for t in tokens:
+        words.update(w.lower() for w in _SUBWORD_RE.findall(t))
+    return any(w in DENY_TOKENS for w in words)
 
 
 def _norm(name: str) -> str:

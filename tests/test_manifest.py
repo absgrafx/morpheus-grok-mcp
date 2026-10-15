@@ -34,7 +34,7 @@ BANNED_PATTERNS = [
 ]
 SCANNED = [
     "README.md", "CHANGELOG.md", ".cursor-plugin/plugin.json", "mcp.json", "pyproject.toml",
-    "docs/*.md", "docs/listing/*", "skills/*/SKILL.md", "src/morpheus_mcp/*.py", "scripts/*.py",
+    "docs/*.md", "docs/listing/*", "skills/*/SKILL.md", "src/morpheus_mcp/*.py", "scripts/*.py", "tests/*.py",
 ]
 
 
@@ -73,7 +73,11 @@ def test_public_files_have_no_banned_terms():
     files = list(scanned_files())
     assert len(files) >= 15
     for f in files:
-        assert not find_banned(f.read_text()), f"{f.relative_to(ROOT)}: {find_banned(f.read_text())}"
+        hits = find_banned(f.read_text())
+        if f.resolve() == Path(__file__).resolve():
+            # This file holds the pattern list and its fixtures; check it for names only.
+            hits = [h for h in hits if h.startswith(("name sha256", "name prefix sha256"))]
+        assert not hits, f"{f.relative_to(ROOT)}: {hits}"
 
 
 def _h(word):

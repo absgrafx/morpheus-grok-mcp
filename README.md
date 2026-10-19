@@ -221,7 +221,7 @@ Morpheus note at 2026-10-15T10:25:16-04:00: served by "google-gemma-4-31b-it" in
 
 With a Marketplace install, the plugin manages `mcp.json`, so edit a local copy instead: see [From a clone](#from-a-clone-local-testing).
 
-**The first call to a model is slow or times out.** On both an Uplink and api.mor.org, the first prompt to a model opens an on-chain session if none is open, so that call can be slow or hit the 60-second timeout. Retry it once the session is open, or use a warm model.
+**The first call to a model may be slow or time out.** On both an Uplink and api.mor.org, the first prompt to a model can open a provider session if none is open, so that call may be slow or hit the 60-second timeout. That is expected. Retry once the session is open. Warm models are faster; prefer them for testing.
 
 ## Support
 
